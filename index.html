@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlier Assistant - Expert Project Help</title>
+    
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Custom Properties for Theming --- */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: #111827; /* Darker Slate */
+            --bg-secondary: #1f2937; /* Slate */
+            --bg-card: #374151;
+            --text-primary: #f9fafb; /* Almost White */
+            --text-secondary: #d1d5db; /* Light Gray */
+            --border-color: #4b5563;
+            --accent-color: #8b5cf6; /* A refined Violet */
+            --accent-glow-rgb: 139, 92, 246; /* RGB for the accent color */
+            --gradient-start: #8b5cf6;
+            --gradient-end: #6366f1;
+        }
+
+        .light-theme {
+            /* Light Theme */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb; /* Off-white */
+            --bg-card: #ffffff;
+            --text-primary: #111827; /* Dark Slate */
+            --text-secondary: #374151;
+            --border-color: #e5e7eb; /* Very Light Gray */
+            --accent-color: #4f46e5; /* Professional Indigo */
+            --accent-glow-rgb: 79, 70, 229;
+            --gradient-start: #4f46e5;
+            --gradient-end: #6d28d9;
+        }
+
+        /* --- Base & Typography --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- Subtle Animated Grid Background (Dark Theme Only) --- */
+        .dark-theme-bg::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(var(--accent-glow-rgb), 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(var(--accent-glow-rgb), 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: pan-grid 30s linear infinite;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .dark-theme .dark-theme-bg::before {
+            opacity: 1;
+        }
+        @keyframes pan-grid {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+
+        /* --- Animations & Effects --- */
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--accent-color); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        .progress-bar-fill {
+            transform-origin: left; transform: scaleX(0);
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .visible .progress-bar-fill { transform: scaleX(1); }
+
+        /* --- Refined UI Elements --- */
+        .gradient-text {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-headline {
+            letter-spacing: -0.02em;
+        }
+        .dark-theme .main-headline {
+             text-shadow: 0 0 15px rgba(var(--accent-glow-rgb), 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px -5px rgba(var(--accent-glow-rgb), 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px -5px rgba(var(--accent-glow-rgb), 0.6);
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+        .light-theme .card {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .light-theme .card:hover {
+             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        /* --- Theme Toggle Switch --- */
+        .theme-switch {
+            display: inline-block; height: 28px; position: relative; width: 52px;
+        }
+        .theme-switch input { display:none; }
+        .slider {
+            background-color: #374151; bottom: 0; cursor: pointer; left: 0;
+            position: absolute; right: 0; top: 0; transition: .4s; border-radius: 28px;
+        }
+        .slider:before {
+            background-color: #fff; bottom: 4px; content: ""; height: 20px; left: 4px;
+            position: absolute; transition: .4s; width: 20px; border-radius: 50%;
+        }
+        .light-theme .slider { background-color: #e5e7eb; }
+        .light-theme .slider:before { background-color: #fff; box-shadow: 0 0 1px #4f46e5; }
+        
+        input:checked + .slider { background: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+    </style>
+</head>
+<body class="antialiased dark-theme-bg">
+
+    <!-- Header & Navigation -->
+    <header class="fixed top-0 left-0 right-0 z-50 border-b transition-colors" style="background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent); backdrop-filter: blur(12px); border-color: color-mix(in srgb, var(--border-color) 50%, transparent);">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#home" class="text-2xl font-bold" style="color: var(--text-primary);">Outlier Assistant</a>
+            <div class="flex items-center">
+                <ul class="hidden md:flex items-center space-x-8">
+                    <li><a href="#about" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">About</a></li>
+                    <li><a href="#expertise" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Expertise</a></li>
+                    <li><a href="#testimonials" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Reviews</a></li>
+                    <li><a href="#contact" class="btn-primary text-white font-bold py-2 px-4 rounded-lg text-sm">Contact Us</a></li>
+                </ul>
+                <div class="theme-switch-wrapper ml-4">
+                    <label class="theme-switch" for="theme-toggle">
+                        <input type="checkbox" id="theme-toggle" />
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button id="mobile-menu-button" class="md:hidden focus:outline-none ml-4" style="color: var(--text-primary);">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden" style="background-color: var(--bg-secondary);">
+            <a href="#about" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">About</a>
+            <a href="#expertise" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Expertise</a>
+            <a href="#testimonials" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Reviews</a>
+            <a href="#contact" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Contact Us</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="min-h-screen flex items-center">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="main-headline text-5xl md:text-7xl font-extrabold leading-tight mb-4" style="color: var(--text-primary);">
+                    Pass Your Outlier Projects, <span class="gradient-text">Guaranteed</span>.
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 max-w-4xl mx-auto" style="color: var(--text-secondary);">
+                    Meet <span id="name-placeholder" class="font-semibold" style="color: var(--text-primary);"></span><span id="cursor" class="border-r-2" style="border-color: var(--accent-color);"></span> your professional assistant for expert help on all Outlier project assessments.
+                </p>
+                <a href="#contact" class="bg-white text-black font-bold py-3 px-8 rounded-lg hover:bg-neutral-200 transition-all duration-300 text-lg">Get Help Now</a>
+            </div>
+        </section>
+
+        <!-- All other sections -->
+        <section id="about" class="py-20 md:py-32 reveal">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-12" style="color: var(--text-primary)">Why Choose Us?</h2>
+                <div class="flex flex-col md:flex-row items-center gap-12">
+                    <div class="md:w-1/3">
+                        <img src="https://placehold.co/400x400/8b5cf6/f9fafb?text=OA" alt="Outlier Assistant Logo" class="rounded-full shadow-lg mx-auto border-4" style="border-color: var(--border-color)">
+                    </div>
+                    <div class="md:w-2/3 text-lg space-y-4" style="color: var(--text-secondary)">
+                        <p>We specialize in providing premier assistance for Outlier.org projects. Our mission is to help you navigate your toughest assessments with confidence, delivering high-quality, expert support to ensure you pass successfully.</p>
+                        <p>We are your dedicated partners, offering deep expertise in a range of subjects to help you overcome any challenge and achieve your learning goals on the Outlier platform.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="expertise" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Our Expertise</h2>
+                <div class="max-w-4xl mx-auto"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">Programming Languages</h3>
+                    <div class="space-y-8">
+                        <!-- Skills will be injected here -->
+                    </div>
+                </div>
+                <div class="max-w-4xl mx-auto mt-16"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">STEM Subjects</h3>
+                    <div class="space-y-8">
+                        <!-- Skills will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials" class="py-20 md:py-32 reveal">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2>
+                <div id="testimonial-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            </div>
+        </section>
+
+        <section id="services" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Subjects Covered</h2>
+                <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Coding</h3></div>
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Chemistry</h3></div>
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Biology</h3></div>
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Maths</h3></div>
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Physics</h3></div>
+                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Generalist</h3></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-20 md:py-32 reveal">
+            <div class="container mx-auto px-6 text-center">
+                 <h2 class="text-4xl font-bold text-center mb-8" style="color: var(--text-primary)">Contact Us</h2>
+                 <p class="text-xl max-w-2xl mx-auto mb-8" style="color: var(--text-secondary)">Ready to pass? Send a message on WhatsApp to discuss your Outlier project and get started right away.</p>
+                 <a href="https://wa.me/YOUR_PHONE_NUMBER?text=Hi!%20I'm%20interested%20in%20your%20Outlier%20project%20assistance." target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg transition-all duration-300 text-lg inline-flex items-center gap-3 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    Message on WhatsApp
+                 </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-8 mt-16 border-t text-center" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+        <div class="container mx-auto px-6" style="color: var(--text-secondary)">
+            <p class="font-bold" style="color: var(--text-primary)">Outlier Assistant</p>
+            <p class="text-sm">Office 12, 3rd Floor, Tech Tower</p>
+            <p class="text-sm">Shahrah-e-Faisal, Karachi, Pakistan</p>
+            <p class="mt-4 text-xs opacity-50">&copy; 2024 Outlier Assistant. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Theme Toggle Logic ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        function setGlowColorRgbVar(isDark) {
+            const rgb = isDark ? '139, 92, 246' : '79, 70, 229';
+            document.documentElement.style.setProperty('--accent-glow-rgb', rgb);
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                body.classList.add('dark-theme');
+                body.classList.remove('light-theme');
+                themeToggle.checked = false;
+                setGlowColorRgbVar(true);
+            } else {
+                body.classList.add('light-theme');
+                body.classList.remove('dark-theme');
+                themeToggle.checked = true;
+                setGlowColorRgbVar(false);
+            }
+        }
+
+        themeToggle.addEventListener('change', () => {
+            const newTheme = themeToggle.checked ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        
+        // Mobile Menu
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        
+        // Typewriter
+        const nameElement = document.getElementById('name-placeholder');
+        const nameToType = "Outlier Assistant";
+        let typingIndex = 0;
+        function type() {
+            if (typingIndex < nameToType.length) {
+                nameElement.textContent += nameToType.charAt(typingIndex++);
+                setTimeout(type, 100);
+            } else {
+                document.getElementById('cursor').style.animation = 'blink-caret .75s step-end infinite';
+            }
+        }
+        
+        // Testimonials
+        const testimonials = [
+            { name: 'Priya S.', country: 'India', flag: '🇮🇳', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
+            { name: 'John D.', country: 'USA', flag: '🇺🇸', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
+            { name: 'Emily C.', country: 'UK', flag: ' 🇧', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
+            { name: 'Michael B.', country: 'USA', flag: '🇺🇸', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' }
+        ];
+
+        function generateRandomDate() {
+            const end = new Date('2025-06-27');
+            const start = new Date('2025-05-01');
+            const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            return randomDate.toLocaleDateString('en-US', options);
+        }
+        
+        function displayTestimonials() {
+            const container = document.getElementById('testimonial-container');
+            if(!container) return;
+            const shuffled = [...testimonials].sort(() => 0.5 - Math.random());
+            container.innerHTML = shuffled.slice(0, 3).map(t => {
+                const randomDate = generateRandomDate();
+                return `
+                    <div class="card p-6 flex flex-col">
+                        <p class="mb-4 flex-grow" style="color: var(--text-secondary)">"${t.review}"</p>
+                        <div class="flex items-center mt-auto">
+                            <div>
+                                <span class="font-bold text-lg" style="color: var(--text-primary)">${t.name}</span>
+                                <span class="ml-2">${t.flag}</span>
+                            </div>
+                            <span class="ml-auto text-xs opacity-75" style="color: var(--text-secondary)">${randomDate}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Scroll Reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Initial Page Load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyTheme(savedTheme);
+            setTimeout(type, 500);
+            displayTestimonials();
+        });
+    </script>
+
+</body>
+</html>
+ 
