@@ -49,6 +49,10 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
+            /* Screenshot Deterrent */
+            user-select: none; 
+            -webkit-user-select: none;
+            -moz-user-select: none;
         }
 
         /* --- Subtle Animated Grid Background (Dark Theme Only) --- */
@@ -93,6 +97,19 @@
         }
         .visible .progress-bar-fill { transform: scaleX(1); }
 
+        /* --- Testimonial Marquee --- */
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        .marquee-wrapper {
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+
         /* --- Refined UI Elements --- */
         .gradient-text {
             background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
@@ -100,12 +117,8 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .main-headline {
-            letter-spacing: -0.02em;
-        }
-        .dark-theme .main-headline {
-             text-shadow: 0 0 15px rgba(var(--accent-glow-rgb), 0.3);
-        }
+        .main-headline { letter-spacing: -0.02em; }
+        .dark-theme .main-headline { text-shadow: 0 0 15px rgba(var(--accent-glow-rgb), 0.3); }
 
         .btn-primary {
             background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
@@ -127,34 +140,28 @@
             transform: translateY(-5px);
             border-color: var(--accent-color);
         }
-        .light-theme .card {
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        .light-theme .card:hover {
-             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
+        .light-theme .card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .light-theme .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 
         /* --- Theme Toggle Switch --- */
-        .theme-switch {
-            display: inline-block; height: 28px; position: relative; width: 52px;
-        }
+        .theme-switch { display: inline-block; height: 28px; position: relative; width: 52px; }
         .theme-switch input { display:none; }
-        .slider {
-            background-color: #374151; bottom: 0; cursor: pointer; left: 0;
-            position: absolute; right: 0; top: 0; transition: .4s; border-radius: 28px;
-        }
-        .slider:before {
-            background-color: #fff; bottom: 4px; content: ""; height: 20px; left: 4px;
-            position: absolute; transition: .4s; width: 20px; border-radius: 50%;
-        }
+        .slider { background-color: #374151; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 28px; }
+        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 20px; left: 4px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; }
         .light-theme .slider { background-color: #e5e7eb; }
         .light-theme .slider:before { background-color: #fff; box-shadow: 0 0 1px #4f46e5; }
-        
         input:checked + .slider { background: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(24px); }
+        
+        /* --- Custom Message Box --- */
+        #alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; background-color: #ef4444; color: white; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #alert-box.visible { opacity: 1; visibility: visible; }
     </style>
 </head>
 <body class="antialiased dark-theme-bg">
+
+    <!-- Custom Alert Box -->
+    <div id="alert-box">This function is disabled.</div>
 
     <!-- Header & Navigation -->
     <header class="fixed top-0 left-0 right-0 z-50 border-b transition-colors" style="background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent); backdrop-filter: blur(12px); border-color: color-mix(in srgb, var(--border-color) 50%, transparent);">
@@ -191,22 +198,27 @@
         <section id="home" class="min-h-screen flex items-center">
             <div class="container mx-auto px-6 text-center">
                 <h1 class="main-headline text-5xl md:text-7xl font-extrabold leading-tight mb-4" style="color: var(--text-primary);">
-                    Pass Your Outlier Projects, <span class="gradient-text">Guaranteed</span>.
+                    Join 100k+ experts improving the <span class="gradient-text">accuracy of AI</span>.
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 max-w-4xl mx-auto" style="color: var(--text-secondary);">
-                    Meet <span id="name-placeholder" class="font-semibold" style="color: var(--text-primary);"></span><span id="cursor" class="border-r-2" style="border-color: var(--accent-color);"></span> your professional assistant for expert help on all Outlier project assessments.
+                    Work from home, on your own schedule.
                 </p>
-                <a href="#contact" class="bg-white text-black font-bold py-3 px-8 rounded-lg hover:bg-neutral-200 transition-all duration-300 text-lg">Get Help Now</a>
+                <a href="#contact" class="btn-primary text-white font-bold py-3 px-8 rounded-lg text-lg">Get Started</a>
             </div>
         </section>
 
-        <!-- All other sections -->
+        <!-- About Section -->
         <section id="about" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center mb-12" style="color: var(--text-primary)">Why Choose Us?</h2>
                 <div class="flex flex-col md:flex-row items-center gap-12">
-                    <div class="md:w-1/3">
-                        <img src="https://placehold.co/400x400/8b5cf6/f9fafb?text=OA" alt="Outlier Assistant Logo" class="rounded-full shadow-lg mx-auto border-4" style="border-color: var(--border-color)">
+                    <div class="md:w-1/3 flex justify-center">
+                        <div class="w-48 h-48 rounded-full flex items-center justify-center shadow-lg border-4" style="background-color: var(--bg-secondary); border-color: var(--border-color)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" style="color: var(--accent-color)" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 011.056 0l4 2a1 1 0 001.056 0l4-2a1 1 0 001.056 0l2.606-1.302a1 1 0 000-1.84l-7-3zM3.75 9.19l-1.406-.702a1 1 0 00-1.056 1.84l7 3.5a1 1 0 00.952 0l7-3.5a1 1 0 00-1.056-1.84l-1.406.702-2.952 1.476a1 1 0 01-1.056 0L3.75 9.19z"/>
+                                <path d="M10 18a1 1 0 00.952-.69l3.5-7a1 1 0 00-1.904-.88l-2.596 5.192-2.596-5.192a1 1 0 00-1.904.88l3.5 7A1 1 0 0010 18z"/>
+                            </svg>
+                        </div>
                     </div>
                     <div class="md:w-2/3 text-lg space-y-4" style="color: var(--text-secondary)">
                         <p>We specialize in providing premier assistance for Outlier.org projects. Our mission is to help you navigate your toughest assessments with confidence, delivering high-quality, expert support to ensure you pass successfully.</p>
@@ -216,29 +228,32 @@
             </div>
         </section>
 
+        <!-- Expertise Section -->
         <section id="expertise" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Our Expertise</h2>
-                <div class="max-w-4xl mx-auto"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">Programming Languages</h3>
-                    <div class="space-y-8">
-                        <!-- Skills will be injected here -->
-                    </div>
+                <div id="programming-skills" class="max-w-4xl mx-auto"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">Programming Languages</h3>
+                    <div class="space-y-8"></div>
                 </div>
-                <div class="max-w-4xl mx-auto mt-16"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">STEM Subjects</h3>
-                    <div class="space-y-8">
-                        <!-- Skills will be injected here -->
-                    </div>
+                <div id="stem-skills" class="max-w-4xl mx-auto mt-16"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">STEM Subjects</h3>
+                    <div class="space-y-8"></div>
                 </div>
             </div>
         </section>
 
+        <!-- Testimonials Section -->
         <section id="testimonials" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6">
-                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2>
-                <div id="testimonial-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+                 <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2>
+            </div>
+            <div class="marquee-wrapper">
+                <div id="testimonial-container" class="flex">
+                    <!-- Testimonials will be injected here by JavaScript -->
+                </div>
             </div>
         </section>
 
+        <!-- Subjects Covered Section -->
         <section id="services" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Subjects Covered</h2>
@@ -253,11 +268,12 @@
             </div>
         </section>
 
+        <!-- Contact Section -->
         <section id="contact" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6 text-center">
                  <h2 class="text-4xl font-bold text-center mb-8" style="color: var(--text-primary)">Contact Us</h2>
                  <p class="text-xl max-w-2xl mx-auto mb-8" style="color: var(--text-secondary)">Ready to pass? Send a message on WhatsApp to discuss your Outlier project and get started right away.</p>
-                 <a href="https://wa.me/YOUR_PHONE_NUMBER?text=Hi!%20I'm%20interested%20in%20your%20Outlier%20project%20assistance." target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg transition-all duration-300 text-lg inline-flex items-center gap-3 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-1">
+                 <a href="https://wa.me/15875516557?text=Hi!%20I'm%20interested%20in%20your%20Outlier%20project%20assistance." target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg transition-all duration-300 text-lg inline-flex items-center gap-3 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                     Message on WhatsApp
                  </a>
@@ -268,8 +284,8 @@
     <footer class="py-8 mt-16 border-t text-center" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
         <div class="container mx-auto px-6" style="color: var(--text-secondary)">
             <p class="font-bold" style="color: var(--text-primary)">Outlier Assistant</p>
-            <p class="text-sm">Office 12, 3rd Floor, Tech Tower</p>
-            <p class="text-sm">Shahrah-e-Faisal, Karachi, Pakistan</p>
+            <p class="text-sm">Suite 404, 1021 West Hastings Street</p>
+            <p class="text-sm">Vancouver, BC, Canada</p>
             <p class="mt-4 text-xs opacity-50">&copy; 2024 Outlier Assistant. All Rights Reserved.</p>
         </div>
     </footer>
@@ -304,30 +320,19 @@
             applyTheme(newTheme);
         });
         
-        // Mobile Menu
+        // --- Mobile Menu ---
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
         mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
         
-        // Typewriter
-        const nameElement = document.getElementById('name-placeholder');
-        const nameToType = "Outlier Assistant";
-        let typingIndex = 0;
-        function type() {
-            if (typingIndex < nameToType.length) {
-                nameElement.textContent += nameToType.charAt(typingIndex++);
-                setTimeout(type, 100);
-            } else {
-                document.getElementById('cursor').style.animation = 'blink-caret .75s step-end infinite';
-            }
-        }
-        
-        // Testimonials
+        // --- Testimonials Data ---
         const testimonials = [
             { name: 'Priya S.', country: 'India', flag: '🇮🇳', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
-            { name: 'John D.', country: 'USA', flag: '🇺🇸', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
-            { name: 'Emily C.', country: 'UK', flag: ' 🇧', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
-            { name: 'Michael B.', country: 'USA', flag: '🇺🇸', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' }
+            { name: 'John D.', country: 'USA', flag: '�🇸', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
+            { name: 'Emily C.', country: 'UK', flag: '🇬🇧', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
+            { name: 'Michael B.', country: 'USA', flag: '🇺🇸', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' },
+            { name: 'Chloe R.', country: 'USA', flag: '🇺🇸', review: 'My Calculus project was a nightmare, but they handled it so professionally. I got a great grade and finally understood the concepts.' },
+            { name: 'Rohan K.', country: 'India', flag: '🇮🇳', review: 'The service for the Generalist path is unmatched. Fast, reliable, and always high quality. A must for any Outlier student.' }
         ];
 
         function generateRandomDate() {
@@ -341,11 +346,11 @@
         function displayTestimonials() {
             const container = document.getElementById('testimonial-container');
             if(!container) return;
-            const shuffled = [...testimonials].sort(() => 0.5 - Math.random());
-            container.innerHTML = shuffled.slice(0, 3).map(t => {
+
+            const cardHTML = testimonials.map(t => {
                 const randomDate = generateRandomDate();
                 return `
-                    <div class="card p-6 flex flex-col">
+                    <div class="card p-6 flex flex-col flex-shrink-0 mx-4" style="width: 350px;">
                         <p class="mb-4 flex-grow" style="color: var(--text-secondary)">"${t.review}"</p>
                         <div class="flex items-center mt-auto">
                             <div>
@@ -357,26 +362,70 @@
                     </div>
                 `;
             }).join('');
+
+            // Duplicate for seamless loop
+            container.innerHTML = cardHTML + cardHTML;
+
+            // Animate the marquee
+            const duration = testimonials.length * 8; // Adjust seconds per card for speed
+            container.style.animation = `marquee ${duration}s linear infinite`;
         }
 
-        // Scroll Reveal
+        // --- Skills Graph Data & Generator ---
+        const programmingSkills = [
+            { name: 'Python', percentage: 98 }, { name: 'JavaScript', percentage: 96 },
+            { name: 'TypeScript', percentage: 95 }, { name: 'Java', percentage: 94 },
+            { name: 'C++', percentage: 92 }, { name: 'Go', percentage: 90 },
+            { name: 'Swift', percentage: 89 }
+        ];
+        const stemSkills = [
+            { name: 'Maths', percentage: 99 }, { name: 'Physics', percentage: 97 },
+            { name: 'Biology', percentage: 96 }, { name: 'Chemistry', percentage: 95 }
+        ];
+
+        function createSkillBar(skill) {
+            return `<div class="w-full"><div class="flex justify-between items-center mb-1"><span class="text-lg font-medium" style="color: var(--text-secondary)">${skill.name}</span><span class="text-lg font-medium" style="color: var(--text-primary)">${skill.percentage}%</span></div><div class="w-full rounded-full h-2.5" style="background-color: color-mix(in srgb, var(--bg-primary) 50%, transparent)"><div class="h-2.5 rounded-full progress-bar-fill" style="width: ${skill.percentage}%; background: var(--accent-color);"></div></div></div>`;
+        }
+
+        function displaySkills() {
+            const progContainer = document.querySelector('#programming-skills .space-y-8');
+            const stemContainer = document.querySelector('#stem-skills .space-y-8');
+            if (progContainer) { progContainer.innerHTML = programmingSkills.map(createSkillBar).join(''); }
+            if (stemContainer) { stemContainer.innerHTML = stemSkills.map(createSkillBar).join(''); }
+        }
+
+        // --- Screenshot & Content Protection ---
+        function showDisabledMessage() {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.classList.add('visible');
+            setTimeout(() => { alertBox.classList.remove('visible'); }, 2000);
+        }
+
+        document.addEventListener('contextmenu', (e) => { e.preventDefault(); showDisabledMessage(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+                e.preventDefault(); showDisabledMessage();
+            }
+        });
+
+        // --- Scroll Reveal ---
         const revealElements = document.querySelectorAll('.reveal');
         const revealObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('visible');
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
         }, { threshold: 0.1 });
         revealElements.forEach(el => revealObserver.observe(el));
 
-        // Initial Page Load
+        // --- Initial Page Load ---
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(savedTheme);
-            setTimeout(type, 500);
+            // No typewriter effect needed for the new headline
+            // setTimeout(type, 500); 
             displayTestimonials();
+            displaySkills();
         });
     </script>
 
 </body>
 </html>
- 
+�
