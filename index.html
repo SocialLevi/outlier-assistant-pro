@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Outlier Assistant - Expert Project Help</title>
 
-    <!-- THEME-AWARE FAVICON -->
     <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
     
-    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Inter for a clean, modern look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -52,10 +49,22 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
-            /* Screenshot Deterrent */
             user-select: none; 
             -webkit-user-select: none;
             -moz-user-select: none;
+        }
+        
+        /* --- Screenshot Deterrent Overlay --- */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0; /* covers the entire viewport */
+            z-index: 9999;
+            pointer-events: none; /* Allows user to interact with the page */
+            background-image: linear-gradient(45deg, rgba(180, 180, 180, 0.05) 25%, transparent 25%, transparent 75%, rgba(180, 180, 180, 0.05) 75%),
+                              linear-gradient(-45deg, rgba(180, 180, 180, 0.05) 25%, transparent 25%, transparent 75%, rgba(180, 180, 180, 0.05) 75%);
+            background-size: 8px 8px;
+            opacity: 0.5;
         }
 
         /* --- Subtle Animated Grid Background (Dark Theme Only) --- */
@@ -82,23 +91,12 @@
         }
 
         /* --- Animations & Effects --- */
-        @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: var(--accent-color); }
-        }
-
         .reveal {
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
         .reveal.visible { opacity: 1; transform: translateY(0); }
-
-        .progress-bar-fill {
-            transform-origin: left; transform: scaleX(0);
-            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .visible .progress-bar-fill { transform: scaleX(1); }
 
         /* --- Testimonial Marquee --- */
         @keyframes marquee {
@@ -146,27 +144,89 @@
         .light-theme .card { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
         .light-theme .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
 
-        /* --- Theme Toggle Switch --- */
-        .theme-switch { display: inline-block; height: 28px; position: relative; width: 52px; }
+        /* --- Modern Theme Toggle Switch --- */
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 34px; position: relative; width: 60px; }
         .theme-switch input { display:none; }
-        .slider { background-color: #374151; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 28px; }
-        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 20px; left: 4px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; }
-        .light-theme .slider { background-color: #e5e7eb; }
-        .light-theme .slider:before { background-color: #fff; box-shadow: 0 0 1px #4f46e5; }
-        input:checked + .slider { background: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
+        .slider {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0;
+            transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            background-color: #fff; bottom: 3px; content: ""; height: 26px; left: 4px; position: absolute;
+            transition: .4s; width: 26px; border-radius: 50%; box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: #4F46E5; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .slider .sun-icon, .slider .moon-icon {
+            position: absolute; top: 50%; transform: translateY(-50%); color: #FBBF24;
+            transition: opacity 0.3s, transform 0.4s; pointer-events: none;
+        }
+        .slider .sun-icon { left: 8px; opacity: 1; }
+        .slider .moon-icon { right: 8px; color: #E5E7EB; opacity: 0; }
+        input:checked ~ .slider .sun-icon { opacity: 0; transform: translateY(-50%) rotate(15deg); }
+        input:checked ~ .slider .moon-icon { opacity: 1; transform: translateY(-50%) rotate(0); }
+        .light-theme .slider:before { background-color: #ffffff; }
+
+        /* --- Skills Radial Chart Styling --- */
+        .skill-chart { position: relative; width: 150px; height: 150px; }
+        .skill-chart-svg { transform: rotate(-90deg); }
+        .skill-chart-bg { stroke: var(--border-color); opacity: 0.5; }
+        .skill-chart-progress {
+            stroke: var(--accent-color);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .skill-chart-text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center;
+        }
+        .skill-chart-percent { font-size: 2rem; font-weight: 800; color: var(--text-primary); }
+        .skill-chart-name { font-size: 1rem; color: var(--text-secondary); }
         
-        /* --- Custom Message Box --- */
-        #alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; background-color: #ef4444; color: white; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #alert-box.visible { opacity: 1; visibility: visible; }
+        /* --- Chat Bot Widget Styling --- */
+        #chat-toggle-button {
+            position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10000; transition: all 0.3s ease;
+        }
+        #chat-widget {
+            position: fixed; bottom: 100px; right: 20px; width: 350px;
+            max-width: calc(100vw - 40px); max-height: 70vh;
+            border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--bg-secondary);
+            display: flex; flex-direction: column; overflow: hidden; z-index: 10000;
+            transform: scale(0.95) translateY(10px); opacity: 0; visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+        }
+        #chat-widget.visible { transform: scale(1) translateY(0); opacity: 1; visibility: visible; }
+        .chat-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .chat-messages { flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .chat-message { padding: 0.75rem 1rem; border-radius: 18px; max-width: 80%; line-height: 1.4; animation: fade-in 0.3s ease; }
+        .bot-message { background-color: var(--bg-card); color: var(--text-primary); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .user-message { background: var(--accent-color); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+        .chat-input-form { display: flex; gap: 8px; }
+        #chat-input {
+            flex-grow: 1; background-color: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-primary); border-radius: 8px; padding: 8px 12px;
+        }
+        #chat-input:focus {
+            outline: none; border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(var(--accent-glow-rgb), 0.3);
+        }
+        #chat-send-btn { border: none; border-radius: 8px; padding: 0 12px; cursor: pointer; }
     </style>
 </head>
 <body class="antialiased dark-theme-bg">
 
-    <!-- Custom Alert Box -->
-    <div id="alert-box">This function is disabled.</div>
-
-    <!-- Header & Navigation -->
     <header class="fixed top-0 left-0 right-0 z-50 border-b transition-colors" style="background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent); backdrop-filter: blur(12px); border-color: color-mix(in srgb, var(--border-color) 50%, transparent);">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <a href="#home" class="text-2xl font-bold" style="color: var(--text-primary);">Outlier Assistant</a>
@@ -175,12 +235,16 @@
                     <li><a href="#about" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">About</a></li>
                     <li><a href="#expertise" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Expertise</a></li>
                     <li><a href="#testimonials" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Reviews</a></li>
+                    <li><a href="#projects" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Projects</a></li>
                     <li><a href="#contact" class="btn-primary text-white font-bold py-2 px-4 rounded-lg text-sm">Contact Us</a></li>
                 </ul>
                 <div class="theme-switch-wrapper ml-4">
                     <label class="theme-switch" for="theme-toggle">
                         <input type="checkbox" id="theme-toggle" />
-                        <span class="slider round"></span>
+                        <span class="slider">
+                            <svg class="sun-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 010 1.06l-1.591 1.59a.75.75 0 01-1.06-1.061l1.59-1.59a.75.75 0 011.06 0zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM17.836 17.836a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.06-1.06l1.591 1.59a.75.75 0 010 1.061zM12 18.75a.75.75 0 01-.75.75v2.25a.75.75 0 011.5 0v-2.25a.75.75 0 01-.75-.75zM5.106 17.836a.75.75 0 010-1.06l1.591-1.59a.75.75 0 011.06 1.061l-1.59 1.59a.75.75 0 01-1.06 0zM4.5 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75zM6.106 5.106a.75.75 0 011.06 0l1.59 1.591a.75.75 0 01-1.06 1.06l-1.59-1.59a.75.75 0 010-1.061z"></path></svg>
+                            <svg class="moon-icon w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 004.463-.949a.75.75 0 01.981.658c-.149.945-.432 1.843-.804 2.668-1.536 2.528-4.02 4.272-6.884 4.721A.75.75 0 0115.75 24a12.001 12.001 0 01-11.48-13.513C4.956 5.544 7.351 3.149 9.528 1.718z" clip-rule="evenodd"></path></svg>
+                        </span>
                     </label>
                 </div>
                 <button id="mobile-menu-button" class="md:hidden focus:outline-none ml-4" style="color: var(--text-primary);">
@@ -192,36 +256,35 @@
             <a href="#about" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">About</a>
             <a href="#expertise" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Expertise</a>
             <a href="#testimonials" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Reviews</a>
+            <a href="#projects" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Projects</a>
             <a href="#contact" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Contact Us</a>
         </div>
     </header>
 
     <main>
-        <!-- Home Section -->
-        <section id="home" class="min-h-screen flex items-center">
-            <div class="container mx-auto px-6 text-center">
-                <h1 class="main-headline text-5xl md:text-7xl font-extrabold leading-tight mb-4" style="color: var(--text-primary);">
-                    Changing the future of AI <span class="gradient-text">across the globe</span>.
-                </h1>
-                <p class="text-xl md:text-2xl mb-8 max-w-4xl mx-auto" style="color: var(--text-secondary);">
-                    Work from home, on your own schedule.
-                </p>
-                <a href="#contact" class="btn-primary text-white font-bold py-3 px-8 rounded-lg text-lg">Get Started</a>
+        <section id="home" class="min-h-screen flex items-center pt-24 md:pt-0">
+            <div class="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center gap-12">
+                <div class="md:w-6/12 lg:w-7/12 text-center md:text-left">
+                    <h1 class="main-headline text-4xl md:text-5xl lg:text-7xl font-extrabold leading-tight mb-4" style="color: var(--text-primary);">
+                        Changing the future of AI <span class="gradient-text">across the globe</span>.
+                    </h1>
+                    <p class="text-lg md:text-xl lg:text-2xl mb-8 max-w-2xl mx-auto md:mx-0" style="color: var(--text-secondary);">
+                        Work from home, on your own schedule.
+                    </p>
+                    <a href="#contact" class="btn-primary text-white font-bold py-3 px-8 rounded-lg text-lg">Get Started</a>
+                </div>
+                <div class="md:w-6/12 lg:w-5/12 flex justify-center md:justify-end">
+                    <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1931&auto=format&fit=crop" alt="Developer working on code on a laptop" class="w-full h-auto rounded-lg shadow-xl dark:shadow-2xl dark:shadow-[0_0_35px_rgba(var(--accent-glow-rgb),0.25)] transition-shadow duration-300">
+                </div>
             </div>
         </section>
 
-        <!-- About Section -->
         <section id="about" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center mb-12" style="color: var(--text-primary)">Why Choose Us?</h2>
                 <div class="flex flex-col md:flex-row items-center gap-12">
                     <div class="md:w-1/3 flex justify-center">
-                        <div class="w-48 h-48 rounded-full flex items-center justify-center shadow-lg border-4" style="background-color: var(--bg-secondary); border-color: var(--border-color)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" style="color: var(--accent-color)" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 011.056 0l4 2a1 1 0 001.056 0l4-2a1 1 0 001.056 0l2.606-1.302a1 1 0 000-1.84l-7-3zM3.75 9.19l-1.406-.702a1 1 0 00-1.056 1.84l7 3.5a1 1 0 00.952 0l7-3.5a1 1 0 00-1.056-1.84l-1.406.702-2.952 1.476a1 1 0 01-1.056 0L3.75 9.19z"/>
-                                <path d="M10 18a1 1 0 00.952-.69l3.5-7a1 1 0 00-1.904-.88l-2.596 5.192-2.596-5.192a1 1 0 00-1.904.88l3.5 7A1 1 0 0010 18z"/>
-                            </svg>
-                        </div>
+                        <img loading="lazy" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1888&auto=format&fit=crop" alt="Icon representing expertise" class="w-48 h-48 rounded-full object-cover border-4" style="border-color: var(--border-color);">
                     </div>
                     <div class="md:w-2/3 text-lg space-y-4" style="color: var(--text-secondary)">
                         <p>We specialize in providing premier assistance for Outlier AI projects. Our mission is to help you navigate your toughest assessments with confidence, delivering high-quality, expert support to ensure you pass successfully.</p>
@@ -231,54 +294,40 @@
             </div>
         </section>
 
-        <!-- Expertise Section -->
         <section id="expertise" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
             <div class="container mx-auto px-6">
                 <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Our Expertise</h2>
-                <div id="programming-skills" class="max-w-4xl mx-auto"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">Programming Languages</h3>
-                    <div class="space-y-8"></div>
+                <div id="programming-skills">
+                    <h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-primary);">Programming Languages</h3>
+                    <div class="flex flex-wrap justify-center gap-8"></div>
                 </div>
-                <div id="stem-skills" class="max-w-4xl mx-auto mt-16"><h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-secondary)">STEM Subjects</h3>
-                    <div class="space-y-8"></div>
+                <div id="stem-skills" class="mt-20">
+                    <h3 class="text-2xl font-semibold text-center mb-10" style="color: var(--text-primary);">STEM Subjects</h3>
+                    <div class="flex flex-wrap justify-center gap-8"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Testimonials Section -->
         <section id="testimonials" class="py-20 md:py-32 reveal">
+            <div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2></div>
+            <div class="marquee-wrapper"><div id="testimonial-container" class="flex"></div></div>
+        </section>
+
+        <section id="projects" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
             <div class="container mx-auto px-6">
-                 <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2>
-            </div>
-            <div class="marquee-wrapper">
-                <div id="testimonial-container" class="flex">
-                    <!-- Testimonials will be injected here by JavaScript -->
-                </div>
+                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Featured Projects & Tutorials</h2>
+                <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    </div>
             </div>
         </section>
 
-        <!-- Subjects Covered Section -->
-        <section id="services" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
-            <div class="container mx-auto px-6">
-                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Subjects Covered</h2>
-                <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Coding</h3></div>
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Chemistry</h3></div>
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Biology</h3></div>
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Maths</h3></div>
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Physics</h3></div>
-                     <div class="card p-8"><h3 class="text-2xl font-bold" style="color: var(--accent-color)">Generalist</h3></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Contact Section -->
         <section id="contact" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6 text-center">
                  <h2 class="text-4xl font-bold text-center mb-8" style="color: var(--text-primary)">Contact Us</h2>
                  <p class="text-xl max-w-2xl mx-auto mb-8" style="color: var(--text-secondary)">Ready to pass? Send a message on WhatsApp to discuss your Outlier project and get started right away.</p>
                  <a href="https://wa.me/15875516557?text=Hi!%20I'm%20interested%20in%20your%20Outlier%20project%20assistance." target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg transition-all duration-300 text-lg inline-flex items-center gap-3 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                    Message on WhatsApp
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                     Message on WhatsApp
                  </a>
             </div>
         </section>
@@ -289,143 +338,256 @@
             <p class="font-bold" style="color: var(--text-primary)">Outlier Assistant</p>
             <p class="text-sm">Suite 404, 1021 West Hastings Street</p>
             <p class="text-sm">Vancouver, BC, Canada</p>
-            <p class="mt-4 text-xs opacity-50">&copy; 2024 Outlier Assistant. All Rights Reserved.</p>
+            <p class="mt-4 text-xs opacity-50">&copy; 2025 Outlier Assistant. All Rights Reserved.</p>
         </div>
     </footer>
 
+    <div id="chat-bot">
+        <button id="chat-toggle-button" class="btn-primary">
+            <svg id="chat-open-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            <svg id="chat-close-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <div id="chat-widget">
+            <div class="chat-header">
+                <h3 class="font-bold text-lg" style="color: var(--text-primary);">Help Bot</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">Your personal Outlier guide</p>
+            </div>
+            <div class="chat-messages" id="chat-messages-container"></div>
+            <div class="chat-input-area">
+                <form id="chat-input-form" class="chat-input-form">
+                    <input type="text" id="chat-input" placeholder="Ask about services, price..." required autocomplete="off">
+                    <button id="chat-send-btn" type="submit" class="btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- Theme Toggle Logic ---
-        const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
-
-        function setGlowColorRgbVar(isDark) {
-            const rgb = isDark ? '139, 92, 246' : '79, 70, 229';
-            document.documentElement.style.setProperty('--accent-glow-rgb', rgb);
-        }
-
-        function applyTheme(theme) {
-            if (theme === 'dark') {
-                body.classList.add('dark-theme');
-                body.classList.remove('light-theme');
-                themeToggle.checked = false;
-                setGlowColorRgbVar(true);
-            } else {
-                body.classList.add('light-theme');
-                body.classList.remove('dark-theme');
-                themeToggle.checked = true;
-                setGlowColorRgbVar(false);
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Theme Toggle Logic ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            function applyTheme(theme) {
+                if (theme === 'light') {
+                    body.classList.add('light-theme'); body.classList.remove('dark-theme'); themeToggle.checked = true;
+                } else {
+                    body.classList.add('dark-theme'); body.classList.remove('light-theme'); themeToggle.checked = false;
+                }
             }
-        }
+            themeToggle.addEventListener('change', () => {
+                const newTheme = themeToggle.checked ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+            
+            // --- Mobile Menu ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            mobileMenuLinks.forEach(link => link.addEventListener('click', () => mobileMenu.classList.add('hidden')));
 
-        themeToggle.addEventListener('change', () => {
-            const newTheme = themeToggle.checked ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        });
-        
-        // --- Mobile Menu ---
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-        
-        // --- Testimonials Data ---
-        const testimonials = [
-            { name: 'Priya S.', country: 'India', flag: '🇮🇳', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
-            { name: 'John D.', country: 'USA', flag: '🇺🇸', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
-            { name: 'Emily C.', country: 'UK', flag: '🇬🇧', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
-            { name: 'Michael B.', country: 'USA', flag: '🇺🇸', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' },
-            { name: 'Chloe R.', country: 'USA', flag: '🇺🇸', review: 'My Calculus project was a nightmare, but they handled it so professionally. I got a great grade and finally understood the concepts.' },
-            { name: 'Rohan K.', country: 'India', flag: '🇮🇳', review: 'The service for the Generalist path is unmatched. Fast, reliable, and always high quality. A must for any Outlier student.' }
-        ];
+            
+            // --- UPDATED: Testimonials Data with Images ---
+            const testimonials = [
+                { name: 'Priya S.', country: 'India', flag: '🇮🇳', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1887&auto=format&fit=crop', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
+                { name: 'John D.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
+                { name: 'Emily C.', country: 'UK', flag: '🇬🇧', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2070&auto=format&fit=crop', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
+                { name: 'Michael B.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' },
+                { name: 'Chloe R.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop', review: 'My Calculus project was a nightmare, but they handled it so professionally. I got a great grade and finally understood the concepts.' },
+                { name: 'Rohan K.', country: 'India', flag: '🇮🇳', image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1887&auto=format&fit=crop', review: 'The service for the Generalist path is unmatched. Fast, reliable, and always high quality. A must for any Outlier student.' }
+            ];
 
-        function generateRandomDate() {
-            const end = new Date('2025-06-27');
-            const start = new Date('2025-05-01');
-            const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-            const options = { month: 'long', day: 'numeric', year: 'numeric' };
-            return randomDate.toLocaleDateString('en-US', options);
-        }
-        
-        function displayTestimonials() {
-            const container = document.getElementById('testimonial-container');
-            if(!container) return;
+            function generateRandomDate() {
+                const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 2);
+                return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+                       .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            }
 
-            const cardHTML = testimonials.map(t => {
-                const randomDate = generateRandomDate();
-                return `
+            function displayTestimonials() {
+                const container = document.getElementById('testimonial-container'); if(!container) return;
+                const cardHTML = testimonials.map(t => `
                     <div class="card p-6 flex flex-col flex-shrink-0 mx-4" style="width: 350px;">
                         <p class="mb-4 flex-grow" style="color: var(--text-secondary)">"${t.review}"</p>
-                        <div class="flex items-center mt-auto">
-                            <div>
+                        <div class="flex items-center mt-auto pt-4 border-t" style="border-color: var(--border-color);">
+                            <img loading="lazy" src="${t.image}" alt="Profile picture of ${t.name}" class="w-12 h-12 rounded-full object-cover border-2" style="border-color: var(--accent-color);">
+                            <div class="ml-4">
                                 <span class="font-bold text-lg" style="color: var(--text-primary)">${t.name}</span>
                                 <span class="ml-2">${t.flag}</span>
                             </div>
-                            <span class="ml-auto text-xs opacity-75" style="color: var(--text-secondary)">${randomDate}</span>
+                            <span class="ml-auto text-xs opacity-75" style="color: var(--text-secondary)">${generateRandomDate()}</span>
                         </div>
-                    </div>
-                `;
-            }).join('');
-
-            // Duplicate for seamless loop
-            container.innerHTML = cardHTML + cardHTML;
-
-            // Animate the marquee
-            const duration = testimonials.length * 8; // Adjust seconds per card for speed
-            container.style.animation = `marquee ${duration}s linear infinite`;
-        }
-
-        // --- Skills Graph Data & Generator ---
-        const programmingSkills = [
-            { name: 'Python', percentage: 98 }, { name: 'JavaScript', percentage: 96 },
-            { name: 'TypeScript', percentage: 95 }, { name: 'Java', percentage: 94 },
-            { name: 'C++', percentage: 92 }, { name: 'Go', percentage: 90 },
-            { name: 'Swift', percentage: 89 }
-        ];
-        const stemSkills = [
-            { name: 'Maths', percentage: 99 }, { name: 'Physics', percentage: 97 },
-            { name: 'Biology', percentage: 96 }, { name: 'Chemistry', percentage: 95 }
-        ];
-
-        function createSkillBar(skill) {
-            return `<div class="w-full"><div class="flex justify-between items-center mb-1"><span class="text-lg font-medium" style="color: var(--text-secondary)">${skill.name}</span><span class="text-lg font-medium" style="color: var(--text-primary)">${skill.percentage}%</span></div><div class="w-full rounded-full h-2.5" style="background-color: color-mix(in srgb, var(--bg-primary) 50%, transparent)"><div class="h-2.5 rounded-full progress-bar-fill" style="width: ${skill.percentage}%; background: var(--accent-color);"></div></div></div>`;
-        }
-
-        function displaySkills() {
-            const progContainer = document.querySelector('#programming-skills .space-y-8');
-            const stemContainer = document.querySelector('#stem-skills .space-y-8');
-            if (progContainer) { progContainer.innerHTML = programmingSkills.map(createSkillBar).join(''); }
-            if (stemContainer) { stemContainer.innerHTML = stemSkills.map(createSkillBar).join(''); }
-        }
-
-        // --- Screenshot & Content Protection ---
-        function showDisabledMessage() {
-            const alertBox = document.getElementById('alert-box');
-            alertBox.classList.add('visible');
-            setTimeout(() => { alertBox.classList.remove('visible'); }, 2000);
-        }
-
-        document.addEventListener('contextmenu', (e) => { e.preventDefault(); showDisabledMessage(); });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
-                e.preventDefault(); showDisabledMessage();
+                    </div>`).join('');
+                container.innerHTML = cardHTML + cardHTML;
+                container.style.animation = `marquee ${testimonials.length * 8}s linear infinite`;
             }
-        });
 
-        // --- Scroll Reveal ---
-        const revealElements = document.querySelectorAll('.reveal');
-        const revealObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-        }, { threshold: 0.1 });
-        revealElements.forEach(el => revealObserver.observe(el));
+            // --- Skills Radial Chart Data & Generator ---
+            const programmingSkills = [ { name: 'Python', percentage: 98 }, { name: 'JavaScript', percentage: 96 }, { name: 'TypeScript', percentage: 95 }, { name: 'Java', percentage: 94 }, { name: 'C++', percentage: 92 }, { name: 'Go', percentage: 90 }, ];
+            const stemSkills = [ { name: 'Maths', percentage: 99 }, { name: 'Physics', percentage: 97 }, { name: 'Biology', percentage: 96 }, { name: 'Chemistry', percentage: 95 } ];
+            function createRadialSkillChart(skill) {
+                const radius = 60; const strokeWidth = 12; const circumference = 2 * Math.PI * radius;
+                return `
+                    <div class="skill-chart reveal" data-percentage="${skill.percentage}">
+                        <div class="skill-chart-text">
+                            <div class="skill-chart-percent">${skill.percentage}%</div>
+                            <div class="skill-chart-name">${skill.name}</div>
+                        </div>
+                        <svg class="skill-chart-svg" width="150" height="150" viewBox="0 0 150 150">
+                            <circle class="skill-chart-bg" cx="75" cy="75" r="${radius}" stroke-width="${strokeWidth}" fill="transparent"></circle>
+                            <circle class="skill-chart-progress" cx="75" cy="75" r="${radius}" stroke-width="${strokeWidth}" fill="transparent"
+                                stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}"></circle>
+                        </svg>
+                    </div>`;
+            }
+            function displaySkills() {
+                const progContainer = document.querySelector('#programming-skills .flex');
+                const stemContainer = document.querySelector('#stem-skills .flex');
+                if (progContainer) progContainer.innerHTML = programmingSkills.map(createRadialSkillChart).join('');
+                if (stemContainer) stemContainer.innerHTML = stemSkills.map(createRadialSkillChart).join('');
+            }
 
-        // --- Initial Page Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            applyTheme(savedTheme);
-            // No typewriter effect needed for the new headline
-            // setTimeout(type, 500); 
-            displayTestimonials();
-            displaySkills();
+            // --- NEW: Projects Video Data & Generator ---
+            const projectVideos = [
+                { videoId: 'eKqY-oP1d_Y', title: 'JavaScript Full Course', description: 'A comprehensive 10-hour course covering everything from basics to advanced JS concepts.' },
+                { videoId: '8dWL3wF_OMw', title: 'Python for Everybody', description: 'Dr. Chuck Severance offers a full university-level Python course for absolute beginners.' },
+                { videoId: 'z-fXz_p5gU', title: 'HTML & CSS Full Course', description: 'Build a solid foundation in web development with this beginner-friendly course on HTML5 and CSS3.' },
+                { videoId: 'OEy0-oF2GuI', title: 'Intro to React & Next.js', description: 'Learn the fundamentals of React and the Next.js framework for building modern web applications.' },
+                { videoId: 'SB-xc6VTPU0', title: 'Data Structures & Algorithms', description: 'An easy-to-follow introduction to the core concepts of data structures and algorithms for interviews.' },
+                { videoId: 'KJgsSFOSQv0', title: 'SQL Tutorial - Full Database Course', description: 'A complete SQL course that takes you from beginner to advanced level in database management.' }
+            ];
+
+            function displayProjects() {
+                const container = document.getElementById('projects-container');
+                if (!container) return;
+
+                // Shuffle the array and pick the first 3
+                const randomVideos = projectVideos.sort(() => 0.5 - Math.random()).slice(0, 3);
+                
+                const videoHTML = randomVideos.map(video => `
+                    <div class="card p-4 reveal">
+                        <div class="aspect-video mb-4">
+                            <iframe loading="lazy" class="w-full h-full rounded-md" 
+                                src="https://www.youtube.com/embed/${video.videoId}" 
+                                title="${video.title}" frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">${video.title}</h3>
+                        <p class="text-sm" style="color: var(--text-secondary);">${video.description}</p>
+                    </div>
+                `).join('');
+                container.innerHTML = videoHTML;
+            }
+
+            // --- Free-Text Chat Bot Logic ---
+            const chatToggleButton = document.getElementById('chat-toggle-button');
+            const chatWidget = document.getElementById('chat-widget');
+            const chatOpenIcon = document.getElementById('chat-open-icon');
+            const chatCloseIcon = document.getElementById('chat-close-icon');
+            const messagesContainer = document.getElementById('chat-messages-container');
+            const chatInputForm = document.getElementById('chat-input-form');
+            const chatInput = document.getElementById('chat-input');
+            const botResponses = {
+                greeting: "Hello! How can I help you today? You can ask me about our services, pricing, or how to contact us.",
+                services: "We offer expert assistance for a variety of subjects on the Outlier platform, including coding, maths, and sciences. You can see a full list in our 'Subjects Covered' section.",
+                contact: "The quickest way to get a quote is via WhatsApp. Our experts are ready to discuss your project details. You can find the button in the 'Contact Us' section.",
+                expertise: "We excel in many programming languages and STEM subjects. Our 'Expertise' section has animated charts showing our proficiency in each area.",
+                pricing: "Our pricing depends on the project's complexity and deadline. For a precise and fast quote, please message us on WhatsApp with your project details.",
+                default: "I'm sorry, I'm just a simple bot and didn't quite understand that. Please try asking about 'services', 'contact', 'expertise' or 'pricing'."
+            };
+            const keywordMap = {
+                greeting: ['hello', 'hi', 'hey'],
+                services: ['help', 'service', 'offer', 'do'],
+                contact: ['contact', 'whatsapp', 'phone', 'message'],
+                expertise: ['skill', 'expert', 'python', 'math', 'proficient'],
+                pricing: ['price', 'cost', 'how much', 'fees', 'pricing']
+            };
+
+            function toggleChatWidget() {
+                const isVisible = chatWidget.classList.toggle('visible');
+                chatOpenIcon.classList.toggle('hidden', isVisible); chatCloseIcon.classList.toggle('hidden', !isVisible);
+                if (isVisible && messagesContainer.children.length === 0) {
+                   addMessage(botResponses.greeting, 'bot-message');
+                }
+                if(isVisible) chatInput.focus();
+            }
+
+            function getBotResponse(userInput) {
+                const lowerCaseInput = userInput.toLowerCase();
+                for (const key in keywordMap) {
+                    if (keywordMap[key].some(keyword => lowerCaseInput.includes(keyword))) {
+                        return botResponses[key];
+                    }
+                }
+                return botResponses.default;
+            }
+
+            chatInputForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const userInput = chatInput.value.trim();
+                if (userInput === "") return;
+                addMessage(userInput, 'user-message');
+                chatInput.value = '';
+                setTimeout(() => {
+                    const response = getBotResponse(userInput);
+                    addMessage(response, 'bot-message');
+                }, 1000);
+            });
+            
+            function addMessage(text, type) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `chat-message ${type}`;
+                msgDiv.textContent = text;
+                messagesContainer.appendChild(msgDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            chatToggleButton.addEventListener('click', toggleChatWidget);
+
+            // --- Content Protection & Silent Blocking ---
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F12' || 
+                   (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || 
+                   (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+                   (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+                    e.preventDefault();
+                }
+            });
+
+            // --- Scroll Reveal & Chart Animation---
+            const revealObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => { 
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        if (entry.target.classList.contains('skill-chart')) {
+                            const progressCircle = entry.target.querySelector('.skill-chart-progress');
+                            const percentage = entry.target.dataset.percentage;
+                            const radius = progressCircle.r.baseVal.value;
+                            const circumference = 2 * Math.PI * radius;
+                            const offset = circumference - (percentage / 100) * circumference;
+                            progressCircle.style.strokeDashoffset = offset;
+                        }
+                    }
+                });
+            }, { threshold: 0.2 });
+            
+            // --- Initial Page Load ---
+            function init() {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                applyTheme(savedTheme);
+                displayTestimonials();
+                displaySkills();
+                displayProjects();
+                document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+            }
+
+            init();
         });
     </script>
 
