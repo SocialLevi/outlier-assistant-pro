@@ -338,7 +338,7 @@
             <p class="font-bold" style="color: var(--text-primary)">Outlier Assistant</p>
             <p class="text-sm">Suite 404, 1021 West Hastings Street</p>
             <p class="text-sm">Vancouver, BC, Canada</p>
-            <p class="mt-4 text-xs opacity-50">&copy; 2025 Outlier Assistant. All Rights Reserved.</p>
+            <p class="mt-4 text-xs opacity-50">© 2025 Outlier Assistant. All Rights Reserved.</p>
         </div>
     </footer>
 
@@ -387,12 +387,17 @@
             // --- Mobile Menu ---
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileMenu = document.getElementById('mobile-menu');
-            const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+            const mobileMenuLinks = document.querySelectorAll('#mobile-menu a, nav a');
             mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-            mobileMenuLinks.forEach(link => link.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
 
-            
-            // --- UPDATED: Testimonials Data with Images ---
+            // --- Testimonials Data with Images ---
             const testimonials = [
                 { name: 'Priya S.', country: 'India', flag: '🇮🇳', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1887&auto=format&fit=crop', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
                 { name: 'John D.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop', review: 'The coding assistance was top-notch. They helped me debug my Python code and understand the logic perfectly. A+' },
@@ -451,28 +456,25 @@
                 if (stemContainer) stemContainer.innerHTML = stemSkills.map(createRadialSkillChart).join('');
             }
 
-            // --- NEW: Projects Video Data & Generator ---
+            // --- Projects Video Data & Generator ---
             const projectVideos = [
                 { videoId: 'eKqY-oP1d_Y', title: 'JavaScript Full Course', description: 'A comprehensive 10-hour course covering everything from basics to advanced JS concepts.' },
                 { videoId: '8dWL3wF_OMw', title: 'Python for Everybody', description: 'Dr. Chuck Severance offers a full university-level Python course for absolute beginners.' },
-                { videoId: 'z-fXz_p5gU', title: 'HTML & CSS Full Course', description: 'Build a solid foundation in web development with this beginner-friendly course on HTML5 and CSS3.' },
-                { videoId: 'OEy0-oF2GuI', title: 'Intro to React & Next.js', description: 'Learn the fundamentals of React and the Next.js framework for building modern web applications.' },
-                { videoId: 'SB-xc6VTPU0', title: 'Data Structures & Algorithms', description: 'An easy-to-follow introduction to the core concepts of data structures and algorithms for interviews.' },
+                { videoId: 'qz0aGYrrlhU', title: 'HTML & CSS Full Course', description: 'Build a solid foundation in web development with this beginner-friendly course on HTML5 and CSS3.' },
+                { videoId: 'bMknfKXIFA8', title: 'Intro to React & Next.js', description: 'Learn the fundamentals of React and the Next.js framework for building modern web applications.' },
+                { videoId: '8hly31xKli0', title: 'Data Structures & Algorithms', description: 'An easy-to-follow introduction to the core concepts of data structures and algorithms for interviews.' },
                 { videoId: 'KJgsSFOSQv0', title: 'SQL Tutorial - Full Database Course', description: 'A complete SQL course that takes you from beginner to advanced level in database management.' }
             ];
 
             function displayProjects() {
                 const container = document.getElementById('projects-container');
                 if (!container) return;
-
-                // Shuffle the array and pick the first 3
                 const randomVideos = projectVideos.sort(() => 0.5 - Math.random()).slice(0, 3);
-                
                 const videoHTML = randomVideos.map(video => `
                     <div class="card p-4 reveal">
                         <div class="aspect-video mb-4">
                             <iframe loading="lazy" class="w-full h-full rounded-md" 
-                                src="https://www.youtube.com/embed/${video.videoId}" 
+                                src="https://www.youtube.com/embed/{video.videoId}" 
                                 title="${video.title}" frameborder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                 allowfullscreen>
