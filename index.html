@@ -235,7 +235,6 @@
                     <li><a href="#about" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">About</a></li>
                     <li><a href="#expertise" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Expertise</a></li>
                     <li><a href="#testimonials" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Reviews</a></li>
-                    <li><a href="#projects" class="transition-colors text-sm" style="color: var(--text-secondary); hover: var(--text-primary)">Projects</a></li>
                     <li><a href="#contact" class="btn-primary text-white font-bold py-2 px-4 rounded-lg text-sm">Contact Us</a></li>
                 </ul>
                 <div class="theme-switch-wrapper ml-4">
@@ -256,7 +255,6 @@
             <a href="#about" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">About</a>
             <a href="#expertise" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Expertise</a>
             <a href="#testimonials" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Reviews</a>
-            <a href="#projects" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Projects</a>
             <a href="#contact" class="block py-2 px-4 text-sm" style="color: var(--text-secondary);">Contact Us</a>
         </div>
     </header>
@@ -311,14 +309,6 @@
         <section id="testimonials" class="py-20 md:py-32 reveal">
             <div class="container mx-auto px-6"><h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">What Our Clients Say</h2></div>
             <div class="marquee-wrapper"><div id="testimonial-container" class="flex"></div></div>
-        </section>
-
-        <section id="projects" class="py-20 md:py-32 reveal" style="background-color: var(--bg-secondary)">
-            <div class="container mx-auto px-6">
-                <h2 class="text-4xl font-bold text-center mb-16" style="color: var(--text-primary)">Featured Projects & Tutorials</h2>
-                <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    </div>
-            </div>
         </section>
 
         <section id="contact" class="py-20 md:py-32 reveal">
@@ -456,38 +446,7 @@
                 if (stemContainer) stemContainer.innerHTML = stemSkills.map(createRadialSkillChart).join('');
             }
 
-            // --- Projects Video Data & Generator ---
-            const projectVideos = [
-                { videoId: 'eKqY-oP1d_Y', title: 'JavaScript Full Course', description: 'A comprehensive 10-hour course covering everything from basics to advanced JS concepts.' },
-                { videoId: '8dWL3wF_OMw', title: 'Python for Everybody', description: 'Dr. Chuck Severance offers a full university-level Python course for absolute beginners.' },
-                { videoId: 'qz0aGYrrlhU', title: 'HTML & CSS Full Course', description: 'Build a solid foundation in web development with this beginner-friendly course on HTML5 and CSS3.' },
-                { videoId: 'bMknfKXIFA8', title: 'Intro to React & Next.js', description: 'Learn the fundamentals of React and the Next.js framework for building modern web applications.' },
-                { videoId: '8hly31xKli0', title: 'Data Structures & Algorithms', description: 'An easy-to-follow introduction to the core concepts of data structures and algorithms for interviews.' },
-                { videoId: 'KJgsSFOSQv0', title: 'SQL Tutorial - Full Database Course', description: 'A complete SQL course that takes you from beginner to advanced level in database management.' }
-            ];
-
-            function displayProjects() {
-                const container = document.getElementById('projects-container');
-                if (!container) return;
-                const randomVideos = projectVideos.sort(() => 0.5 - Math.random()).slice(0, 3);
-                const videoHTML = randomVideos.map(video => `
-                    <div class="card p-4 reveal">
-                        <div class="aspect-video mb-4">
-                            <iframe loading="lazy" class="w-full h-full rounded-md" 
-                                src="https://www.youtube.com/embed/{video.videoId}" 
-                                title="${video.title}" frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">${video.title}</h3>
-                        <p class="text-sm" style="color: var(--text-secondary);">${video.description}</p>
-                    </div>
-                `).join('');
-                container.innerHTML = videoHTML;
-            }
-
-            // --- Free-Text Chat Bot Logic ---
+            // --- Free-Text Chat Bot Logic with Upgrades ---
             const chatToggleButton = document.getElementById('chat-toggle-button');
             const chatWidget = document.getElementById('chat-widget');
             const chatOpenIcon = document.getElementById('chat-open-icon');
@@ -495,25 +454,29 @@
             const messagesContainer = document.getElementById('chat-messages-container');
             const chatInputForm = document.getElementById('chat-input-form');
             const chatInput = document.getElementById('chat-input');
+            
             const botResponses = {
-                greeting: "Hello! How can I help you today? You can ask me about our services, pricing, or how to contact us.",
-                services: "We offer expert assistance for a variety of subjects on the Outlier platform, including coding, maths, and sciences. You can see a full list in our 'Subjects Covered' section.",
+                greeting: "Hello! You can ask me about our services, pricing, or available opportunities.",
+                services: "We offer expert assistance for a variety of subjects on the Outlier platform, including coding, maths, and sciences. You can see a full list in the 'Subjects Covered' section.",
                 contact: "The quickest way to get a quote is via WhatsApp. Our experts are ready to discuss your project details. You can find the button in the 'Contact Us' section.",
                 expertise: "We excel in many programming languages and STEM subjects. Our 'Expertise' section has animated charts showing our proficiency in each area.",
                 pricing: "Our pricing depends on the project's complexity and deadline. For a precise and fast quote, please message us on WhatsApp with your project details.",
-                default: "I'm sorry, I'm just a simple bot and didn't quite understand that. Please try asking about 'services', 'contact', 'expertise' or 'pricing'."
+                opportunities: "Various projects are available at any given time, and the tasks you receive will depend on your specific skills and qualifications.",
+                default: "I'm sorry, I didn't quite understand. Please try asking about 'services', 'contact', 'pricing' or 'opportunities'."
             };
             const keywordMap = {
                 greeting: ['hello', 'hi', 'hey'],
                 services: ['help', 'service', 'offer', 'do'],
                 contact: ['contact', 'whatsapp', 'phone', 'message'],
                 expertise: ['skill', 'expert', 'python', 'math', 'proficient'],
-                pricing: ['price', 'cost', 'how much', 'fees', 'pricing']
+                pricing: ['price', 'cost', 'how much', 'fees', 'pricing'],
+                opportunities: ['opportunity', 'opportunities', 'task', 'tasks', 'job', 'jobs', 'work', 'available', 'projects']
             };
 
             function toggleChatWidget() {
                 const isVisible = chatWidget.classList.toggle('visible');
-                chatOpenIcon.classList.toggle('hidden', isVisible); chatCloseIcon.classList.toggle('hidden', !isVisible);
+                chatOpenIcon.classList.toggle('hidden', isVisible);
+                chatCloseIcon.classList.toggle('hidden', !isVisible);
                 if (isVisible && messagesContainer.children.length === 0) {
                    addMessage(botResponses.greeting, 'bot-message');
                 }
@@ -585,7 +548,6 @@
                 applyTheme(savedTheme);
                 displayTestimonials();
                 displaySkills();
-                displayProjects();
                 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
             }
 
