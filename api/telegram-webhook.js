@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const otpKey = `otp:${username}`;
 
       try {
-        // Store the OTP in Vercel Redis with a 5-minute expiration (300 seconds)
+        // Store the OTP in Upstash Redis with a 5-minute expiration (300 seconds)
         await redis.set(otpKey, otp, { ex: 300 });
 
         // Send the OTP to the user
