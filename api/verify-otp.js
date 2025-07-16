@@ -1,7 +1,6 @@
 // This file should be placed in: /api/verify-otp.js
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client from Vercel Environment Variables
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
@@ -24,7 +23,7 @@ export default async function handler(req, res) {
     const storedOtp = await redis.get(key);
 
     if (!storedOtp) {
-      return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one.' });
+      return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one by messaging /start to our bot.' });
     }
 
     if (otp !== storedOtp) {
