@@ -1,11 +1,6 @@
 // This file should be placed in: /api/verify-otp.js
 import { Redis } from '@upstash/redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Only POST requests allowed' });
@@ -20,6 +15,11 @@ export default async function handler(req, res) {
   const key = `otp:${username}`;
 
   try {
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+
     const storedOtp = await redis.get(key);
 
     if (!storedOtp) {
@@ -30,10 +30,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid OTP.' });
     }
 
-    // OTP is correct. Delete it so it can't be used again.
     await redis.del(key);
     
-    // In a real app, you would generate a secure session token (JWT) here.
     res.status(200).json({ success: true, message: 'Login successful!' });
 
   } catch (error) {
