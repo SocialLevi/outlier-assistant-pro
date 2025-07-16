@@ -5,15 +5,15 @@ import { Telegraf } from 'telegraf';
 export default async function handler(req, res) {
   try {
     // Check for essential environment variables at the start
-    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
       console.error('CRITICAL ERROR: Missing required environment variables.');
       return res.status(500).send('Internal Server Configuration Error');
     }
 
     // Initialize clients inside the handler for serverless environments
     const redis = new Redis({
-      url: process.env.REDIS_URL,
-      token: process.env.REDIS_TOKEN,
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
     });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
