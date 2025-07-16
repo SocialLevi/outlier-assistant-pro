@@ -16,8 +16,8 @@ export default async function handler(req, res) {
 
   try {
     const redis = new Redis({
-      url: process.env.REDIS_URL, // Use Vercel's native Redis variable
-      token: process.env.REDIS_TOKEN, // Use Vercel's native Redis variable
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
     });
 
     const storedOtp = await redis.get(key);
