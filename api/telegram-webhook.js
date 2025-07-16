@@ -3,11 +3,17 @@ import { Redis } from '@upstash/redis';
 import { Telegraf } from 'telegraf';
 
 export default async function handler(req, res) {
+  // Check for essential environment variables at the start
+  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
+    console.error('CRITICAL ERROR: Missing required environment variables.');
+    return res.status(500).send('Internal Server Configuration Error');
+  }
+
   try {
     // Initialize clients inside the handler for serverless environments
     const redis = new Redis({
-      url: process.env.REDIS_URL, // Use Vercel's native Redis variable
-      token: process.env.REDIS_TOKEN, // Use Vercel's native Redis variable
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
     });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
@@ -32,7 +38,7 @@ export default async function handler(req, res) {
         await ctx.reply(`Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`);
         console.log(`OTP sent to ${username}`);
       } catch (error) {
-        console.error('Error handling /start command:', error);
+        console.error('Error handling /start command (e.g., Redis or Telegram send failed):', error);
         await ctx.reply('Sorry, there was an error processing your request. Please try again later.');
       }
     });
@@ -41,7 +47,7 @@ export default async function handler(req, res) {
     await bot.handleUpdate(req.body, res);
 
   } catch (err) {
-    console.error('Error in main handler:', err);
+    console.error('Error in main webhook handler:', err);
     if (!res.headersSent) {
       res.status(500).send('Internal Server Error');
     }
