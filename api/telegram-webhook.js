@@ -1,18 +1,19 @@
+// This file should be placed in: /api/telegram-webhook.js
 import { Redis } from '@upstash/redis';
 import { Telegraf } from 'telegraf';
 
 export default async function handler(req, res) {
   try {
     // Check for essential environment variables at the start
-    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
       console.error('CRITICAL ERROR: Missing required environment variables.');
       return res.status(500).send('Internal Server Configuration Error');
     }
 
     // Initialize clients inside the handler for serverless environments
     const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
     });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
