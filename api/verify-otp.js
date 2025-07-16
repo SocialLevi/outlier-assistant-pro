@@ -2,12 +2,6 @@
 import { Redis } from '@upstash/redis';
 
 export default async function handler(req, res) {
-  // Check for essential environment variables
-  if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
-      console.error('Missing Redis environment variables.');
-      return res.status(500).json({ error: 'Internal Server Configuration Error' });
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Only POST requests allowed' });
   }
