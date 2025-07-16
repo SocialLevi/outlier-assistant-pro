@@ -1,6 +1,15 @@
+// This file should be placed in: /api/verify-otp.js
+import { Redis } from '@upstash/redis';
+
+// Initialize Redis client from Vercel Environment Variables
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).send({ message: 'Only POST requests allowed' });
+    return res.status(405).json({ message: 'Only POST requests allowed' });
   }
 
   const { username, otp } = req.body;
@@ -9,12 +18,27 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Username and OTP are required.' });
   }
 
-  // In a real application, you would check the OTP against a value stored in a database.
-  // For this demonstration, any 6-digit code is accepted to simulate a successful login.
-  if (otp.length === 6 && /^\d+$/.test(otp)) {
-    console.log(`OTP verified for user: ${username}`);
+  const key = `otp:${username}`;
+
+  try {
+    const storedOtp = await redis.get(key);
+
+    if (!storedOtp) {
+      return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one.' });
+    }
+
+    if (otp !== storedOtp) {
+      return res.status(400).json({ error: 'Invalid OTP.' });
+    }
+
+    // OTP is correct. Delete it so it can't be used again.
+    await redis.del(key);
+    
+    // In a real app, you would generate a secure session token (JWT) here.
     res.status(200).json({ success: true, message: 'Login successful!' });
-  } else {
-    res.status(400).json({ error: 'Invalid OTP format.' });
+
+  } catch (error) {
+    console.error('Error in verify-otp:', error);
+    res.status(500).json({ error: 'Failed to verify OTP.' });
   }
 }
