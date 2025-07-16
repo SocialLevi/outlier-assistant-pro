@@ -1,5 +1,5 @@
 // This file should be placed in: /api/telegram-webhook.js
-import { Redis } from '@upstash/redis';
+import { kv } from '@vercel/kv';
 import { Telegraf } from 'telegraf';
 
 export default async function handler(req, res) {
@@ -9,12 +9,6 @@ export default async function handler(req, res) {
       console.error('CRITICAL ERROR: Missing required environment variables.');
       return res.status(500).send('Internal Server Configuration Error');
     }
-
-    // Initialize clients inside the handler for serverless environments
-    const redis = new Redis({
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
-    });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
@@ -31,14 +25,14 @@ export default async function handler(req, res) {
       const otpKey = `otp:${username}`;
 
       try {
-        // Store the OTP in Upstash Redis with a 5-minute expiration (300 seconds)
-        await redis.set(otpKey, otp, { ex: 300 });
+        // Store the OTP in Vercel KV with a 5-minute expiration (300 seconds)
+        await kv.set(otpKey, otp, { ex: 300 });
 
         // Send the OTP to the user
         await ctx.reply(`Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`);
         console.log(`OTP sent to ${username}`);
       } catch (error) {
-        console.error('Error handling /start command (e.g., Redis or Telegram send failed):', error);
+        console.error('Error handling /start command (e.g., KV or Telegram send failed):', error);
         await ctx.reply('Sorry, there was an error processing your request. Please try again later.').catch(err => console.error("Failed to send error reply:", err));
       }
     });
