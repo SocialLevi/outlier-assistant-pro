@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   try {
     // Initialize clients inside the handler for serverless environments
     const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.REDIS_URL, // Use Vercel's native Redis variable
+      token: process.env.REDIS_TOKEN, // Use Vercel's native Redis variable
     });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const otpKey = `otp:${username}`;
 
       try {
-        // Store the OTP in Upstash Redis with a 5-minute expiration (300 seconds)
+        // Store the OTP in Vercel Redis with a 5-minute expiration (300 seconds)
         await redis.set(otpKey, otp, { ex: 300 });
 
         // Send the OTP to the user
