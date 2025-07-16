@@ -1,3 +1,4 @@
+// This file should be placed in: /api/verify-otp.js
 import { Redis } from '@upstash/redis';
 
 export default async function handler(req, res) {
@@ -15,8 +16,8 @@ export default async function handler(req, res) {
 
   try {
     const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
     });
 
     const storedOtp = await redis.get(key);
