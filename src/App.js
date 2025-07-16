@@ -12,18 +12,9 @@ const servicesForSale = [
 const testimonials = [
     { name: 'Priya S.', country: 'India', flag: '🇮🇳', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1887&auto=format&fit=crop', review: 'Absolutely saved me on the Expert Sturgeon project. The explanation was clear and I passed with flying colors. Highly recommend!' },
     { name: 'John D.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop', review: "I was struggling with the Mathematics skill assessment, but their guidance was a game-changer. I passed easily and got matched with a great project right after!" },
-    { name: 'Emily C.', country: 'UK', flag: '🇬🇧', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2070&auto=format&fit=crop', review: 'Brilliant help with the Engine Room V2 project. Professional, fast, and the quality of work was exceptional. Thank you so much!' },
-    { name: 'Michael B.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1887&auto=format&fit=crop', review: 'Passed the Onyx Hammer project thanks to them. I was completely stuck before reaching out. Worth every penny.' },
-    { name: 'Chloe R.', country: 'USA', flag: '🇺🇸', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop', review: 'My Calculus project was a nightmare, but they handled it so professionally. I got a great grade and finally understood the concepts.' },
-    { name: 'Rohan K.', country: 'India', flag: '🇮🇳', image: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1887&auto=format&fit=crop', review: 'The service for the Generalist path is unmatched. Fast, reliable, and always high quality. A must for any Outlier student.' }
 ];
 
-const programmingSkills = [ { name: 'Python', percentage: 98 }, { name: 'JavaScript', percentage: 96 }, { name: 'TypeScript', percentage: 95 }, { name: 'Java', percentage: 94 }, { name: 'C++', percentage: 92 }, { name: 'Go', percentage: 90 }, ];
-const stemSkills = [ { name: 'Maths', percentage: 99 }, { name: 'Physics', percentage: 97 }, { name: 'Biology', percentage: 96 }, { name: 'Chemistry', percentage: 95 } ];
-
-
 // --- HELPER HOOKS & COMPONENTS ---
-
 const useInView = (options) => {
     const [inView, setInView] = useState(false);
     const ref = useRef(null);
@@ -73,9 +64,7 @@ const Section = ({ id, children, className = '' }) => {
     );
 };
 
-
-// --- THEME-AWARE COMPONENTS ---
-
+// --- MAIN COMPONENTS ---
 const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navLinks = [
