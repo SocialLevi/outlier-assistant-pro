@@ -150,8 +150,8 @@ const HeroSection = () => {
                 </div>
                 <div className="md:w-5/12 flex justify-center md:justify-end">
                     <div className="relative">
-                         <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1931&auto=format&fit=crop" alt="Developer working" className="w-full h-auto shadow-lg shadow-cyan-500/20" style={{ filter: 'grayscale(80%) contrast(1.2) brightness(0.8)' }}/>
-                         <div className="absolute inset-0 bg-green-900/20 mix-blend-hard-light"></div>
+                         <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1931&auto=format&fit=crop" alt="Developer working" className="w-full h-auto shadow-lg shadow-cyan-500/20 rounded-lg" style={{ filter: 'grayscale(80%) contrast(1.2) brightness(0.8)' }}/>
+                         <div className="absolute inset-0 bg-green-900/20 mix-blend-hard-light rounded-lg"></div>
                     </div>
                 </div>
             </div>
