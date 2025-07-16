@@ -1,5 +1,5 @@
 // This file should be placed in: /api/verify-otp.js
-import { Redis } from '@upstash/redis';
+import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,12 +15,7 @@ export default async function handler(req, res) {
   const key = `otp:${username}`;
 
   try {
-    const redis = new Redis({
-      url: process.env.RKV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
-    });
-
-    const storedOtp = await redis.get(key);
+    const storedOtp = await kv.get(key);
 
     if (!storedOtp) {
       return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one by messaging /start to our bot.' });
@@ -31,7 +26,7 @@ export default async function handler(req, res) {
     }
 
     // OTP is correct. Delete it so it can't be used again.
-    await redis.del(key);
+    await kv.del(key);
     
     // In a real app, you would generate a secure session token (JWT) here.
     res.status(200).json({ success: true, message: 'Login successful!' });
