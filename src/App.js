@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // You can find more icons at https://lucide.dev/icons/
-import { ShoppingCart, Menu, X, MessageSquare, Send, Copy } from 'lucide-react';
+import { ShoppingCart, Menu, X, MessageSquare, Send, Copy, LogIn, LogOut } from 'lucide-react';
 
 // --- MOCK DATA ---
 const servicesForSale = [
@@ -76,7 +76,7 @@ const Section = ({ id, children, className = '' }) => {
 
 // --- THEME-AWARE COMPONENTS ---
 
-const Header = ({ onCartClick, cartCount }) => {
+const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navLinks = [
         { name: 'Home', href: '#home' },
@@ -89,12 +89,12 @@ const Header = ({ onCartClick, cartCount }) => {
     return (
         <header className="bg-black/80 backdrop-blur-md sticky top-0 z-50 border-b border-green-500/30">
             <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-                <a href="#home" className="text-2xl font-bold text-green-400 hover:text-cyan-400 transition-colors duration-300 glitch-text" data-text="OutlierHelp">
+                <a href="#home" onClick={() => onNavigate('home')} className="text-2xl font-bold text-green-400 hover:text-cyan-400 transition-colors duration-300 glitch-text" data-text="OutlierHelp">
                     OutlierHelp
                 </a>
                 <nav className="hidden md:flex items-center space-x-8">
                     {navLinks.map((link) => (
-                        <a key={link.name} href={link.href} className="text-green-400 hover:text-cyan-400 transition-colors duration-300">
+                        <a key={link.name} href={link.href} onClick={() => onNavigate('home')} className="text-green-400 hover:text-cyan-400 transition-colors duration-300">
                            {'>'} {link.name}
                         </a>
                     ))}
@@ -106,9 +106,11 @@ const Header = ({ onCartClick, cartCount }) => {
                             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{cartCount}</span>
                         )}
                     </button>
-                    <a href="#contact" className="hidden sm:inline-block btn-hacker">
-                        Contact Us
-                    </a>
+                    {isLoggedIn ? (
+                        <button onClick={onLogout} className="btn-hacker-secondary flex items-center gap-2"><LogOut size={16}/> Logout</button>
+                    ) : (
+                         <button onClick={() => onNavigate('login')} className="btn-hacker flex items-center gap-2"><LogIn size={16}/> Login</button>
+                    )}
                     <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-green-400">
                         {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </button>
@@ -118,13 +120,10 @@ const Header = ({ onCartClick, cartCount }) => {
                 <div className="md:hidden bg-black/95 border-t border-green-500/30">
                     <nav className="flex flex-col items-center space-y-4 p-4">
                         {navLinks.map((link) => (
-                            <a key={link.name} href={link.href} className="text-green-400 hover:text-cyan-400" onClick={() => setIsMenuOpen(false)}>
+                            <a key={link.name} href={link.href} className="text-green-400 hover:text-cyan-400" onClick={() => {onNavigate('home'); setIsMenuOpen(false);}}>
                                 {'>'} {link.name}
                             </a>
                         ))}
-                        <a href="#contact" className="w-full text-center btn-hacker mt-4" onClick={() => setIsMenuOpen(false)}>
-                            Contact Us
-                        </a>
                     </nav>
                 </div>
             )}
@@ -523,6 +522,18 @@ const ChatBot = () => {
 export default function App() {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState('login');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    const handleNavigate = (page) => setCurrentPage(page);
+    const handleLogin = () => {
+        setIsLoggedIn(true);
+        setCurrentPage('home');
+    };
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setCurrentPage('login');
+    };
 
     const handleAddToCart = (product) => {
         setCart(prevCart => {
@@ -567,24 +578,51 @@ export default function App() {
 
     return (
         <div className="bg-black text-green-400 font-mono antialiased scroll-smooth">
-            <Header cartCount={cartCount} onCartClick={() => setIsCartOpen(true)} />
-            <main>
-                <HeroSection />
-                <AboutSection />
-                <ExpertiseSection />
-                <ServicesSection onAddToCart={handleAddToCart} />
-                <TestimonialsSection />
-                <ContactSection />
-            </main>
-            <Footer />
-            <CartModal 
-                cart={cart} 
-                isOpen={isCartOpen} 
-                onClose={() => setIsCartOpen(false)}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemoveItem={handleRemoveItem}
-            />
-            <ChatBot />
+            {isLoggedIn ? (
+                <>
+                    <Header 
+                        cartCount={cartCount} 
+                        onCartClick={() => setIsCartOpen(true)}
+                        onNavigate={handleNavigate}
+                        isLoggedIn={isLoggedIn}
+                        onLogout={handleLogout}
+                    />
+                    <main>
+                        <HeroSection />
+                        <AboutSection />
+                        <ExpertiseSection />
+                        <ServicesSection onAddToCart={handleAddToCart} />
+                        <TestimonialsSection />
+                        <ContactSection />
+                    </main>
+                    <Footer />
+                    <CartModal 
+                        cart={cart} 
+                        isOpen={isCartOpen} 
+                        onClose={() => setIsCartOpen(false)}
+                        onUpdateQuantity={handleUpdateQuantity}
+                        onRemoveItem={handleRemoveItem}
+                    />
+                    <ChatBot />
+                </>
+            ) : (
+                <LoginPage onLogin={handleLogin} />
+            )}
+        </div>
+    );
+}
+
+const LoginPage = ({ onLogin }) => {
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-black border border-green-500/50 p-8 shadow-lg shadow-cyan-500/20 w-full max-w-md text-center">
+                <h2 className="text-4xl font-bold mb-8 led-text">Login / Signup</h2>
+                <p className="text-gray-300 mb-8">Authenticate to access your projects and services.</p>
+                <button onClick={onLogin} className="btn-hacker text-lg inline-flex items-center gap-3 w-full justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23a.68.68 0 0 0-.14-.58l-3.39-3.4a.68.68 0 0 1 .2-1.1l4.42-1.62a.68.68 0 0 0 .5-.17l2.16-3.9a.68.68 0 0 1 1.2 0l2.16 3.9a.68.68 0 0 0 .5.17l4.42 1.62a.68.68 0 0 1 .2 1.1l-3.39 3.4a.68.68 0 0 0-.14.58l.28 4.23a.68.68 0 0 1-1 .72l-4.1-2.11a.68.68 0 0 0-.64 0l-4.1 2.11a.68.68 0 0 1-1-.72z"></path></svg>
+                    Continue with Telegram
+                </button>
+            </div>
         </div>
     );
 }
