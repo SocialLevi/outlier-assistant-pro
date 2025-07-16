@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   try {
     // Initialize clients inside the handler for serverless environments
     const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.REDIS_URL, // Use Vercel's native Redis variable
+      token: process.env.REDIS_TOKEN, // Use Vercel's native Redis variable
     });
 
     const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
