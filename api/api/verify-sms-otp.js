@@ -1,0 +1,35 @@
+// This file should be placed in: /api/verify-sms-otp.js
+import { kv } from '@vercel/kv';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Only POST requests allowed' });
+  }
+
+  const { phoneNumber, otp } = req.body;
+
+  if (!phoneNumber || !otp) {
+    return res.status(400).json({ error: 'Phone number and OTP are required.' });
+  }
+
+  const otpKey = `otp:${phoneNumber}`;
+
+  try {
+    const storedOtp = await kv.get(otpKey);
+
+    if (!storedOtp) {
+      return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one.' });
+    }
+
+    if (otp !== storedOtp) {
+      return res.status(400).json({ error: 'Invalid OTP.' });
+    }
+
+    await kv.del(otpKey);
+    
+    res.status(200).json({ success: true, message: 'Login successful!', user: { phone: phoneNumber } });
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    res.status(500).json({ error: 'Failed to verify OTP.' });
+  }
+}
