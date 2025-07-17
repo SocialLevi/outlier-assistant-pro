@@ -1,41 +1,14 @@
-{
-  "name": "outlierhelp-terminal",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@vercel/kv": "^1.0.1",
-    "lucide-react": "^0.395.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-phone-number-input": "^3.4.3",
-    "react-scripts": "5.0.1",
-    "twilio": "^5.2.0"
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+       fontFamily: {
+        mono: ['Fira Code', 'monospace'],
+      },
+    },
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "tailwindcss": "^3.4.4"
-  }
+  plugins: [],
 }
