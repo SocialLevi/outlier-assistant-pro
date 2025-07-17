@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
         console.log(`OTP sent to ${username}`);
       } catch (error) {
-        console.error('Error handling /start command:', error);
+        console.error('Error handling /start command (e.g., KV or Telegram send failed):', error);
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
