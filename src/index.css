@@ -11,6 +11,20 @@ body {
     background-size: 30px 30px;
 }
 
+.PhoneInputInput {
+    background: transparent;
+    color: #00FF00;
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+.PhoneInputCountry {
+    background-color: #1a1a1a;
+    border-right: 1px solid #00ff0050;
+    padding-right: 0.5rem;
+}
+
 @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
@@ -72,3 +86,5 @@ body {
     color: #000;
     box-shadow: 0 0 20px #00FFFF;
 }
+
+src/index.js
