@@ -22,8 +22,8 @@ export default async function handler(req, res) {
       const userKey = `user:${username}`;
 
       try {
-        await kv.set(userKey, { chatId, username });
-        await ctx.reply(`Welcome, @${username}! You are now registered. You can log in on our website using your username.`);
+        await kv.set(userKey, { chatId, username, registeredAt: new Date().toISOString() });
+        await ctx.reply(`Welcome, @${username}! You are now registered. You can now log in on our website using your username.`);
         console.log(`User registered: @${username}`);
       } catch (error) {
         console.error('Error during user registration:', error);
