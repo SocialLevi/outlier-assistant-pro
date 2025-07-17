@@ -1,38 +1,66 @@
-// This file should be placed in: /api/verify-otp.js
+// This file should be placed in: /api/telegram-webhook.js
 import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Only POST requests allowed' });
-  }
-
-  const { username, otp } = req.body;
-
-  if (!username || !otp) {
-    return res.status(400).json({ error: 'Username and OTP are required.' });
-  }
-
-  const key = `otp:${username}`;
-
   try {
-    const storedOtp = await kv.get(key);
-
-    if (!storedOtp) {
-      return res.status(400).json({ error: 'OTP not found or has expired. Please request a new one by messaging /start to our bot.' });
+    // Check for essential environment variables at the start
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+      console.error('CRITICAL ERROR: Missing required environment variables.');
+      return res.status(500).send('Internal Server Configuration Error');
     }
 
-    if (otp !== storedOtp) {
-      return res.status(400).json({ error: 'Invalid OTP.' });
-    }
+    const body = req.body;
+    const message = body.message || body.edited_message;
 
-    // OTP is correct. Delete it so it can't be used again.
-    await kv.del(key);
+    if (message && message.text === '/start') {
+      const chatId = message.chat.id;
+      const username = message.from.username;
+
+      if (!username) {
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: 'Please set a username in your Telegram settings to use this service.',
+          }),
+        });
+        return res.status(200).send('OK');
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpKey = `otp:${username}`;
+
+      try {
+        await kv.set(otpKey, otp, { ex: 300 });
+
+        const replyText = `Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`;
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: replyText }),
+        });
+
+        console.log(`OTP sent to ${username}`);
+      } catch (error) {
+        console.error('Error handling /start command:', error);
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: 'Sorry, there was an error processing your request. Please try again later.',
+          }),
+        }).catch(err => console.error("Failed to send error reply:", err));
+      }
+    }
     
-    // In a real app, you would generate a secure session token (JWT) here.
-    res.status(200).json({ success: true, message: 'Login successful!' });
+    return res.status(200).send('OK');
 
-  } catch (error) {
-    console.error('Error in verify-otp:', error);
-    res.status(500).json({ error: 'Failed to verify OTP.' });
+  } catch (err) {
+    console.error('Error in main handler:', err);
+    if (!res.headersSent) {
+      res.status(500).send('Internal Server Error');
+    }
   }
 }
