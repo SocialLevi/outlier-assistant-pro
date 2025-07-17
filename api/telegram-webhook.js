@@ -1,6 +1,5 @@
 // This file should be placed in: /api/telegram-webhook.js
 import { kv } from '@vercel/kv';
-import { Telegraf } from 'telegraf';
 
 export default async function handler(req, res) {
   try {
@@ -10,15 +9,24 @@ export default async function handler(req, res) {
       return res.status(500).send('Internal Server Configuration Error');
     }
 
-    const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+    const body = req.body;
+    const message = body.message || body.edited_message;
 
-    // This command handler triggers when a user first starts a chat with your bot
-    bot.start(async (ctx) => {
-      const chatId = ctx.chat.id;
-      const username = ctx.from.username;
+    if (message && message.text === '/start') {
+      const chatId = message.chat.id;
+      const username = message.from.username;
 
       if (!username) {
-        return ctx.reply('Please set a username in your Telegram settings to use this service.');
+        // Use fetch to send a reply if username is missing
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: 'Please set a username in your Telegram settings to use this service.',
+          }),
+        });
+        return res.status(200).send('OK');
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -28,17 +36,31 @@ export default async function handler(req, res) {
         // Store the OTP in Vercel KV with a 5-minute expiration (300 seconds)
         await kv.set(otpKey, otp, { ex: 300 });
 
-        // Send the OTP to the user
-        await ctx.reply(`Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`);
+        // Send the OTP to the user using fetch
+        const replyText = `Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`;
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: replyText }),
+        });
+
         console.log(`OTP sent to ${username}`);
       } catch (error) {
         console.error('Error handling /start command (e.g., KV or Telegram send failed):', error);
-        await ctx.reply('Sorry, there was an error processing your request. Please try again later.').catch(err => console.error("Failed to send error reply:", err));
+        // Attempt to send an error message back to the user
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: 'Sorry, there was an error processing your request. Please try again later.',
+          }),
+        }).catch(err => console.error("Failed to send error reply:", err));
       }
-    });
-
-    // This is the main handler for Vercel to process incoming updates from Telegram
-    await bot.handleUpdate(req.body, res);
+    }
+    
+    // Acknowledge all other updates from Telegram immediately
+    return res.status(200).send('OK');
 
   } catch (err) {
     console.error('Error in main handler:', err);
