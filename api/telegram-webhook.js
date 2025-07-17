@@ -17,7 +17,6 @@ export default async function handler(req, res) {
       const username = message.from.username;
 
       if (!username) {
-        // Use fetch to send a reply if username is missing
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -33,10 +32,8 @@ export default async function handler(req, res) {
       const otpKey = `otp:${username}`;
 
       try {
-        // Store the OTP in Vercel KV with a 5-minute expiration (300 seconds)
         await kv.set(otpKey, otp, { ex: 300 });
 
-        // Send the OTP to the user using fetch
         const replyText = `Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`;
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
@@ -46,8 +43,7 @@ export default async function handler(req, res) {
 
         console.log(`OTP sent to ${username}`);
       } catch (error) {
-        console.error('Error handling /start command (e.g., KV or Telegram send failed):', error);
-        // Attempt to send an error message back to the user
+        console.error('Error handling /start command:', error);
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -59,7 +55,6 @@ export default async function handler(req, res) {
       }
     }
     
-    // Acknowledge all other updates from Telegram immediately
     return res.status(200).send('OK');
 
   } catch (err) {
