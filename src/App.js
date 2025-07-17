@@ -65,7 +65,7 @@ const Section = ({ id, children, className = '' }) => {
 };
 
 // --- MAIN COMPONENTS ---
-const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout }) => {
+const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout, username }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navLinks = [
         { name: 'Home', href: '#home' },
@@ -89,6 +89,9 @@ const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout }) =>
                     ))}
                 </nav>
                 <div className="flex items-center space-x-4">
+                    {isLoggedIn && (
+                        <span className="text-cyan-400 hidden sm:block">Welcome, @{username}</span>
+                    )}
                     <button onClick={onCartClick} className="relative text-green-400 hover:text-cyan-400">
                         <ShoppingCart className="h-6 w-6" />
                         {cartCount > 0 && (
@@ -513,14 +516,17 @@ export default function App() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState('login');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [username, setUsername] = useState('');
 
     const handleNavigate = (page) => setCurrentPage(page);
-    const handleLogin = () => {
+    const handleLogin = (user) => {
         setIsLoggedIn(true);
+        setUsername(user);
         setCurrentPage('home');
     };
     const handleLogout = () => {
         setIsLoggedIn(false);
+        setUsername('');
         setCurrentPage('login');
     };
 
@@ -575,6 +581,7 @@ export default function App() {
                         onNavigate={handleNavigate}
                         isLoggedIn={isLoggedIn}
                         onLogout={handleLogout}
+                        username={username}
                     />
                     <main>
                         <HeroSection />
@@ -603,33 +610,32 @@ export default function App() {
 
 const LoginPage = ({ onLogin }) => {
     const [username, setUsername] = useState('');
-    const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
-    const handleOtpSubmit = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (!username || !otp) {
-            setError('Username and OTP are required.');
+        if (!username) {
+            setError('Telegram username is required.');
             return;
         }
         setError('');
         setIsLoading(true);
         
         try {
-            const res = await fetch('/api/verify-otp', {
+            const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, otp }),
+                body: JSON.stringify({ username }),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Verification failed.');
+                throw new Error(data.error || 'Login failed.');
             }
             
-            onLogin();
+            onLogin(data.username);
 
         } catch (err) {
             setError(err.message);
@@ -642,11 +648,9 @@ const LoginPage = ({ onLogin }) => {
         <div className="min-h-screen flex items-center justify-center p-4">
             <div className="bg-black border border-green-500/50 p-8 shadow-lg shadow-cyan-500/20 w-full max-w-md text-center rounded-lg">
                 <h2 className="text-4xl font-bold mb-4 led-text">System Access</h2>
-                <p className="text-gray-300 mb-2">1. Start a chat with our bot on Telegram:</p>
-                <a href="https://t.me/OutlierHelpRobot" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline break-all mb-6 block">t.me/OutlierHelpRobot</a>
-                <p className="text-gray-300 mb-8">2. The bot will send you an OTP. Enter your username and the OTP below.</p>
+                <p className="text-gray-300 mb-8">Enter your Telegram username to continue.</p>
                 
-                <form onSubmit={handleOtpSubmit}>
+                <form onSubmit={handleLogin}>
                     <input 
                         type="text"
                         value={username}
@@ -655,17 +659,8 @@ const LoginPage = ({ onLogin }) => {
                         className="w-full bg-gray-900 border border-green-500/50 p-3 text-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4"
                         disabled={isLoading}
                     />
-                    <input 
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        placeholder="6-digit OTP"
-                        maxLength="6"
-                        className="w-full bg-gray-900 border border-green-500/50 p-3 text-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4 tracking-[1em] text-center"
-                        disabled={isLoading}
-                    />
                     <button type="submit" className="btn-hacker text-lg inline-flex items-center gap-3 w-full justify-center" disabled={isLoading}>
-                        {isLoading ? 'Verifying...' : 'Verify & Enter'}
+                        {isLoading ? 'Authenticating...' : 'Login'}
                     </button>
                 </form>
                 {error && <p className="text-red-500 mt-4">{error}</p>}
