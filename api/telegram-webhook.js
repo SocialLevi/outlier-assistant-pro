@@ -1,61 +1,50 @@
-// This file should be placed in: /api/telegram-webhook.js
-import { kv } from '@vercel/kv';
+/ This file should be placed in: /api/telegram-webhook.js
+import { Redis } from '@upstash/redis';
+import { Telegraf } from 'telegraf';
 
 export default async function handler(req, res) {
   try {
     // Check for essential environment variables at the start
-    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
       console.error('CRITICAL ERROR: Missing required environment variables.');
       return res.status(500).send('Internal Server Configuration Error');
     }
 
-    const body = req.body;
-    const message = body.message || body.edited_message;
+    // Initialize clients inside the handler for serverless environments
+    const redis = new Redis({
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
+    });
 
-    if (message && message.text === '/start') {
-      const chatId = message.chat.id;
-      const username = message.from.username;
+    const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+
+    // This command handler triggers when a user first starts a chat with your bot
+    bot.start(async (ctx) => {
+      const chatId = ctx.chat.id;
+      const username = ctx.from.username;
 
       if (!username) {
-        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: 'Please set a username in your Telegram settings to use this service.',
-          }),
-        });
-        return res.status(200).send('OK');
+        return ctx.reply('Please set a username in your Telegram settings to use this service.');
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpKey = `otp:${username}`;
 
       try {
-        await kv.set(otpKey, otp, { ex: 300 });
+        // Store the OTP in Upstash Redis with a 5-minute expiration (300 seconds)
+        await redis.set(otpKey, otp, { ex: 300 });
 
-        const replyText = `Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`;
-        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: replyText }),
-        });
-
+        // Send the OTP to the user
+        await ctx.reply(`Welcome to OutlierHelp! Your one-time login code is: ${otp}\n\nReturn to the website and enter your username and this code to log in.`);
         console.log(`OTP sent to ${username}`);
       } catch (error) {
-        console.error('Error handling /start command (e.g., KV or Telegram send failed):', error);
-        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: 'Sorry, there was an error processing your request. Please try again later.',
-          }),
-        }).catch(err => console.error("Failed to send error reply:", err));
+        console.error('Error handling /start command (e.g., Redis or Telegram send failed):', error);
+        await ctx.reply('Sorry, there was an error processing your request. Please try again later.').catch(err => console.error("Failed to send error reply:", err));
       }
-    }
-    
-    return res.status(200).send('OK');
+    });
+
+    // This is the main handler for Vercel to process incoming updates from Telegram
+    await bot.handleUpdate(req.body, res);
 
   } catch (err) {
     console.error('Error in main handler:', err);
