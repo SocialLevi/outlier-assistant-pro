@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PhoneInput from 'react-phone-number-input'
 // You can find more icons at https://lucide.dev/icons/
 import { ShoppingCart, Menu, X, MessageSquare, Send, Copy, LogIn, LogOut } from 'lucide-react';
 
@@ -94,7 +95,7 @@ const Header = ({ onCartClick, cartCount, onNavigate, isLoggedIn, onLogout, user
                 </nav>
                 <div className="flex items-center space-x-4">
                     {isLoggedIn && (
-                        <span className="text-cyan-400 hidden sm:block">Welcome, @{username}</span>
+                        <span className="text-cyan-400 hidden sm:block">Welcome, {username}</span>
                     )}
                     <button onClick={onCartClick} className="relative text-green-400 hover:text-cyan-400">
                         <ShoppingCart className="h-6 w-6" />
@@ -613,25 +614,60 @@ export default function App() {
 }
 
 const LoginPage = ({ onLogin }) => {
-    const [username, setUsername] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [step, setStep] = useState(1); // 1 for phone, 2 for OTP
+
+    const handlePhoneSubmit = async (e) => {
+        e.preventDefault();
+        if (!phoneNumber) {
+            setError('Phone number is required.');
+            return;
+        }
+        setError('');
+        setIsLoading(true);
+        setMessage('');
+
+        try {
+            const res = await fetch('/api/send-sms-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phoneNumber }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to send OTP.');
+            }
+
+            setMessage(data.message);
+            setStep(2);
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     
     const handleOtpSubmit = async (e) => {
         e.preventDefault();
-        if (!username || !otp) {
-            setError('Username and OTP are required.');
+        if (!otp) {
+            setError('OTP is required.');
             return;
         }
         setError('');
         setIsLoading(true);
         
         try {
-            const res = await fetch('/api/verify-otp', {
+            const res = await fetch('/api/verify-sms-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, otp }),
+                body: JSON.stringify({ phoneNumber, otp }),
             });
 
             const data = await res.json();
@@ -640,7 +676,7 @@ const LoginPage = ({ onLogin }) => {
                 throw new Error(data.error || 'Verification failed.');
             }
             
-            onLogin(data.username);
+            onLogin(data.user.phone);
 
         } catch (err) {
             setError(err.message);
@@ -653,32 +689,44 @@ const LoginPage = ({ onLogin }) => {
         <div className="min-h-screen flex items-center justify-center p-4">
             <div className="bg-black border border-green-500/50 p-8 shadow-lg shadow-cyan-500/20 w-full max-w-md text-center rounded-lg">
                 <h2 className="text-4xl font-bold mb-4 led-text">System Access</h2>
-                <p className="text-gray-300 mb-2">1. Start a chat with our bot on Telegram:</p>
-                <a href="https://t.me/OutlierHelpRobot" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline break-all mb-6 block">t.me/OutlierHelpRobot</a>
-                <p className="text-gray-300 mb-8">2. The bot will send you an OTP. Enter your username and the OTP below.</p>
                 
-                <form onSubmit={handleOtpSubmit}>
-                    <input 
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="@telegram_username"
-                        className="w-full bg-gray-900 border border-green-500/50 p-3 text-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4"
-                        disabled={isLoading}
-                    />
-                    <input 
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        placeholder="6-digit OTP"
-                        maxLength="6"
-                        className="w-full bg-gray-900 border border-green-500/50 p-3 text-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4 tracking-[1em] text-center"
-                        disabled={isLoading}
-                    />
-                    <button type="submit" className="btn-hacker text-lg inline-flex items-center gap-3 w-full justify-center" disabled={isLoading}>
-                        {isLoading ? 'Verifying...' : 'Verify & Enter'}
-                    </button>
-                </form>
+                {step === 1 ? (
+                    <>
+                        <p className="text-gray-300 mb-8">Enter your phone number to receive a login code.</p>
+                        <form onSubmit={handlePhoneSubmit}>
+                            <div className="bg-gray-900 border border-green-500/50 p-3 rounded-md focus-within:ring-2 focus-within:ring-cyan-500 mb-4">
+                                <PhoneInput
+                                    international
+                                    defaultCountry="US"
+                                    value={phoneNumber}
+                                    onChange={setPhoneNumber}
+                                    className="w-full bg-transparent text-green-400"
+                                />
+                            </div>
+                            <button type="submit" className="btn-hacker text-lg inline-flex items-center gap-3 w-full justify-center" disabled={isLoading}>
+                                {isLoading ? 'Sending...' : 'Send Code'}
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-gray-300 mb-8">{message || `Enter the code sent to ${phoneNumber}`}</p>
+                         <form onSubmit={handleOtpSubmit}>
+                            <input 
+                                type="text"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                placeholder="6-digit OTP"
+                                maxLength="6"
+                                className="w-full bg-gray-900 border border-green-500/50 p-3 text-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-4 tracking-[1em] text-center"
+                                disabled={isLoading}
+                            />
+                            <button type="submit" className="btn-hacker text-lg inline-flex items-center gap-3 w-full justify-center" disabled={isLoading}>
+                                {isLoading ? 'Verifying...' : 'Verify & Enter'}
+                            </button>
+                        </form>
+                    </>
+                )}
                 {error && <p className="text-red-500 mt-4">{error}</p>}
             </div>
         </div>
