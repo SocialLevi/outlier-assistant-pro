@@ -1,5 +1,5 @@
 // This file should be placed in: /api/send-sms-otp.js
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import twilio from 'twilio';
 
 export default async function handler(req, res) {
@@ -13,17 +13,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Phone number is required.' });
   }
 
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    console.error('CRITICAL ERROR: Missing Twilio environment variables.');
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER || !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    console.error('CRITICAL ERROR: Missing environment variables.');
     return res.status(500).json({ error: 'Server configuration error.' });
   }
 
   const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  const redis = new Redis({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  });
+  
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpKey = `otp:${phoneNumber}`;
 
   try {
-    await kv.set(otpKey, otp, { ex: 300 }); // Store OTP for 5 minutes
+    await redis.set(otpKey, otp, { ex: 300 }); // Store OTP for 5 minutes
 
     await twilioClient.messages.create({
       body: `Your Outlier login code is: ${otp}`,
