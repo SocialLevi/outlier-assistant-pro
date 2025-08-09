@@ -12,30 +12,12 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        html {
-            scroll-behavior: smooth;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F9FAFB;
-        }
-        #grid-pattern {
-            background-image: linear-gradient(to right, #E5E7EB 1px, transparent 1px), linear-gradient(to bottom, #E5E7EB 1px, transparent 1px);
-            background-size: 2rem 2rem;
-            opacity: 0.5;
-        }
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes scale-in {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        #grid-pattern { background-image: linear-gradient(to right, #E5E7EB 1px, transparent 1px), linear-gradient(to bottom, #E5E7EB 1px, transparent 1px); background-size: 2rem 2rem; opacity: 0.5; }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
         .modal-backdrop { animation: fade-in 0.3s ease-out forwards; }
         .modal-content { animation: scale-in 0.3s ease-out forwards; }
@@ -57,8 +39,8 @@
         const MenuIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>;
         const ArrowRightIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
         const SearchIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-        
-        // --- NEW: Project Status Modal Component ---
+
+        // --- UPDATED: Project Status Modal Component ---
         const ProjectStatusModal = ({ project, onClose }) => {
             if (!project) return null;
 
@@ -66,8 +48,9 @@
                 switch (status) {
                     case "Active": return { color: "text-green-500", icon: "✅", message: "This project is active and has available tasks." };
                     case "Max Capacity": return { color: "text-red-500", icon: "🔥", message: "This project is at maximum capacity. Task availability is very high but competitive." };
-                    case "Paused": return { color: "text-gray-500", icon: "⏸️", message: "This project is temporarily paused. Check back later for updates." };
-                    default: return { color: "text-yellow-500", icon: "⏳", message: "Status is currently being updated." };
+                    case "Temporary Paused": return { color: "text-orange-500", icon: "⏳", message: "This project is temporarily paused and will resume shortly. Keep an eye out!" };
+                    case "Paused": return { color: "text-gray-500", icon: "⏸️", message: "This project is paused. Check back later for updates." };
+                    default: return { color: "text-yellow-500", icon: "🤔", message: "Status is currently being updated." };
                 }
             };
             const statusInfo = getStatusInfo(project.status);
@@ -75,14 +58,12 @@
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                            <CloseIcon className="w-6 h-6" />
-                        </button>
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><CloseIcon className="w-6 h-6" /></button>
                         <div className="text-6xl mb-4">{statusInfo.icon}</div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">{project.name}</h2>
                         <p className={`text-lg font-semibold ${statusInfo.color} mb-4`}>Status: {project.status}</p>
                         <p className="text-gray-600 mb-6">{statusInfo.message}</p>
-                        <div className="text-sm text-gray-500">Live Task Count: <span className="font-bold text-gray-700">{project.tasks.toLocaleString()}</span></div>
+                        <div className="text-sm text-gray-500">Available Tasks: <span className="font-bold text-gray-700">{project.tasks.toLocaleString()}</span></div>
                     </div>
                 </div>
             );
@@ -92,6 +73,7 @@
             switch (status) {
                 case "Active": return "bg-green-100 text-green-800";
                 case "Max Capacity": return "bg-red-100 text-red-800";
+                case "Temporary Paused": return "bg-orange-100 text-orange-800";
                 case "Paused": return "bg-gray-100 text-gray-800";
                 default: return "bg-yellow-100 text-yellow-800";
             }
@@ -101,12 +83,13 @@
             switch (status) {
                 case "Active": return "bg-green-500";
                 case "Max Capacity": return "bg-red-500";
+                case "Temporary Paused": return "bg-orange-500";
                 case "Paused": return "bg-gray-500";
                 default: return "bg-yellow-500";
             }
         };
 
-        // --- ActiveProjects Component (modified to use new status colors) ---
+        // --- UPDATED: ActiveProjects Component with new text ---
         const ActiveProjects = ({ setActivePage, onApplyNow, projects }) => {
             const SOFT_MAX_TASKS = 20000;
             return (
@@ -123,7 +106,7 @@
                                         </div>
                                         <div className="my-6">
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className="text-sm font-medium text-gray-600">Live Task Pool</span>
+                                                <span className="text-sm font-medium text-gray-600">Available Tasks on Pool</span>
                                                 <span className="text-sm font-semibold text-gray-800">{project.tasks.toLocaleString()}</span>
                                             </div>
                                             <div className="w-full bg-gray-200 rounded-full h-2.5"><div className={`h-2.5 rounded-full ${getProgressBarColor(project.status)}`} style={{ width: `${Math.min((project.tasks / SOFT_MAX_TASKS) * 100, 100)}%` }}></div></div>
@@ -142,95 +125,105 @@
             );
         };
         
-        // --- Other Components (Home, Section, Services, Reviews, ContactUs) are unchanged ---
-        // To save space, these components are collapsed. Their internal code remains the same as your previous version.
+        // --- UPDATED: Services component with fixed & tiered pricing ---
+        const Services = ({ setActivePage, projects, handleHire }) => {
+            const [servicePrices, setServicePrices] = useState({});
+            const [selectedCountry, setSelectedCountry] = useState('US');
+            const countries = [ { name: 'United States', code: 'US' }, { name: 'United Kingdom', code: 'GB' }, { name: 'Canada', code: 'CA' }, { name: 'Australia', code: 'AU' }, { name: 'Mexico', code: 'MX' }, { name: 'Germany', code: 'DE' }, { name: 'Other', code: 'OTHER' }];
+            
+            // Base prices for each project
+            const basePrices = {
+                "Space Camelid": 3.50, "Metro Silo": 4.00, "Valkyrie": 5.00, "Stratus Drake": 4.50, "Rhind Evals": 6.00, "Blueberry Bagels": 3.00, "Cloud Evals": 7.50, "S Knees Man": 8.00, "Mascara Mambo": 5.50, "Glue Sail": 6.50, "Bettascope Rubrics": 7.00, "Multilingual Static Comparison v2": 9.00, "Skilled Shipwright Code": 10.00, "Skilled Shipwright Reasoning": 10.00, "Summer Robin": 4.00, "Big Mallet": 5.00
+            };
+
+            useEffect(() => {
+                const newPrices = {};
+                const isTierOneCountry = ['US', 'GB', 'CA', 'AU'].includes(selectedCountry);
+                
+                projects.forEach(p => {
+                    let price = basePrices[p.name] || 4.00; // Default price if not in map
+                    if (isTierOneCountry) {
+                        price = Math.max(price * 1.5, 5.50); // Increase price for tier 1, ensuring it's > $5
+                    }
+                    newPrices[p.name] = price.toFixed(2);
+                });
+                setServicePrices(newPrices);
+            }, [selectedCountry, projects]); // Re-calculate only when country or projects list changes
+
+            return (
+                <Section id="services" setActivePage={setActivePage}>
+                    <div className="py-20 px-8">
+                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4 text-center">Assessment Passing Services</h2>
+                        <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-8">Select your location to see pricing. We provide expert guidance to help you pass project assessments.</p>
+                        <div className="flex justify-center mb-12"><select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">{countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}</select></div>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {projects.length > 0 ? projects.map((project) => (
+                                <div key={project.name} className="bg-white border border-gray-200/80 rounded-xl p-6 flex flex-col group shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                                    <div className="flex-grow">
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.name}</h3>
+                                        <p className="text-gray-500 text-sm mb-4">Hire an Expert to help you pass your Assessment.</p>
+                                        <div className="text-3xl font-bold text-black">${servicePrices[project.name] || '...'}</div>
+                                    </div>
+                                    <div className="mt-6"><button onClick={() => handleHire(project.name)} className="w-full text-center text-white font-semibold py-2 rounded-lg bg-black hover:bg-gray-800 transition-colors">Hire</button></div>
+                                </div>
+                            )) : <p className="text-gray-500 text-center col-span-full">No services found for this project.</p>}
+                        </div>
+                    </div>
+                </Section>
+            );
+        };
+        
+        // Other components (Home, Section, Reviews, ContactUs) are unchanged and collapsed for brevity.
         const Home = ({ setActivePage }) => ( <Section id="home" setActivePage={setActivePage}> <div className="container mx-auto min-h-[calc(100vh-5rem)] grid md:grid-cols-2 items-center gap-12 px-8"> <div className="text-center md:text-left"> <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-4 animate-fade-in-up">The Future of AI is Human</h1> <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto md:mx-0">Welcome to the Outlier Help Center. We unite human expertise with artificial intelligence to build a smarter world.</p> </div> <div className="flex justify-center"> <img src="https://images.unsplash.com/photo-1696253914339-924a1386a457?q=80&w=1935&auto=format&fit=crop" alt="Abstract visualization of a neural network" className="rounded-2xl shadow-2xl max-w-md w-full" /> </div> </div> </Section> );
         const Section = ({ id, children, setActivePage, className = '' }) => { const ref = useRef(null); useEffect(() => { const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActivePage(id); }, { threshold: 0.5 }); if (ref.current) observer.observe(ref.current); return () => { if (ref.current) observer.unobserve(ref.current); }; }, [id, setActivePage]); return <section id={id} ref={ref} className={className}>{children}</section>; };
-        const Services = ({ setActivePage, projects, handleHire }) => { const [servicePrices, setServicePrices] = useState({}); const [selectedCountry, setSelectedCountry] = useState('US'); useEffect(() => { const newPrices = {}; projects.forEach(p => { newPrices[p.name] = (['US', 'GB', 'CA', 'AU'].includes(selectedCountry) ? (Math.random() * 2 + 8).toFixed(2) : (Math.random() * 5.5 + 2.5).toFixed(2)); }); setServicePrices(newPrices); }, [selectedCountry, projects]); return ( <Section id="services" setActivePage={setActivePage}> <div className="py-20 px-8"> <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4 text-center">Assessment Passing Services</h2> <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-8">Select your location to see pricing. We provide expert guidance to help you pass project assessments.</p> <div className="flex justify-center mb-12"><select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-black"><option value="US">United States</option><option value="GB">United Kingdom</option><option value="CA">Canada</option><option value="OTHER">Other</option></select></div> <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"> {projects.length > 0 ? projects.map((project) => ( <div key={project.name} className="bg-white border border-gray-200/80 rounded-xl p-6 flex flex-col group shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"> <div className="flex-grow"> <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.name}</h3> <p className="text-gray-500 text-sm mb-4">Hire an Expert to help you pass your Assessment.</p> <div className="text-3xl font-bold text-black">${servicePrices[project.name] || '...'}</div> </div> <div className="mt-6"> <button onClick={() => handleHire(project.name)} className="w-full text-center text-white font-semibold py-2 rounded-lg bg-black hover:bg-gray-800 transition-colors">Hire</button> </div> </div> )) : <p className="text-gray-500 text-center col-span-full">No services found for this project.</p>} </div> </div> </Section> ); };
         const Reviews = ({ setActivePage }) => { const testimonials = [ { name: "Google", rating: 5, text: "Outlier's data was pivotal in fine-tuning our Gemini Pro model, increasing multi-modal reasoning accuracy by over 15%.", logo: <svg className="h-10 w-10" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg> }]; return ( <Section id="reviews" setActivePage={setActivePage}><div className="py-20 px-8"><h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center">What our Big Client Companies Say</h2><div className="max-w-6xl mx-auto"><div className="bg-white border border-gray-200/80 rounded-xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"><div className="h-20 flex items-center justify-center mb-4">{testimonials[0].logo}</div><h3 className="font-bold text-gray-900 text-xl mb-2">{testimonials[0].name}</h3><p className="text-gray-600 mb-6 flex-grow">"{testimonials[0].text}"</p></div></div></div></Section> ); };
         const ContactUs = ({ setActivePage, contactMessage, setContactMessage }) => { return ( <Section id="contact-us" setActivePage={setActivePage}> <div className="py-20 px-8"> <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center">Get In Touch</h2> <form className="space-y-6 max-w-xl mx-auto bg-white border border-gray-200/80 rounded-xl p-8 shadow-lg"> <div> <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label> <input type="text" id="name" className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="Your Name" /> </div> <div> <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label> <input type="email" id="email" className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="you@example.com" /> </div> <div> <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label> <textarea id="message" rows="4" value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="How can we help?"></textarea> </div> <div> <button type="submit" className="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 transition-colors">Send Message</button> </div> </form> </div> </Section> ); };
+
 
         function App() {
             const [activePage, setActivePage] = useState('home');
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const [contactMessage, setContactMessage] = useState("");
             const [isScrolled, setIsScrolled] = useState(false);
-            
-            // --- NEW States for Search, Suggestions, and Modal ---
             const [searchTerm, setSearchTerm] = useState("");
             const [suggestions, setSuggestions] = useState([]);
             const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
             const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
-            
             const searchContainerRef = useRef(null);
 
             const allProjects = [ { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, { name: "Rhind Evals" }, { name: "Blueberry Bagels" }, { name: "Cloud Evals" }, { name: "S Knees Man" }, { name: "Mascara Mambo" }, { name: "Glue Sail" }, { name: "Bettascope Rubrics" }, { name: "Multilingual Static Comparison v2" }, { name: "Skilled Shipwright Code" }, { name: "Skilled Shipwright Reasoning" }, { name: "Summer Robin" }, { name: "Big Mallet" } ];
             const [projects, setProjects] = useState(allProjects.map(p => ({...p, status: "Active", tasks: Math.floor(Math.random() * 15000) + 1000 })));
 
-            // --- UPDATED: Live update simulation with new statuses ---
+            // --- NEW: More dynamic project status updates ---
             useEffect(() => {
+                const statuses = ["Active", "Max Capacity", "Temporary Paused", "Paused"];
                 const interval = setInterval(() => {
                     setProjects(currentProjects => 
                         currentProjects.map(p => {
-                            const change = Math.floor(Math.random() * 400) - 190; // Bigger fluctuations
-                            const newTasks = Math.max(0, p.tasks + change);
-                            let newStatus;
-                            if (newTasks > 18000) {
-                                newStatus = "Max Capacity";
-                            } else if (newTasks <= 500) {
-                                newStatus = "Paused";
-                            } else {
-                                newStatus = "Active";
+                            // Randomly decide if a project's status should change
+                            if (Math.random() > 0.7) { // 30% chance to change status
+                                const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                                return { ...p, status: newStatus };
                             }
-                            return { ...p, tasks: newTasks, status: newStatus };
+                            return p; // Otherwise, keep the same status
                         })
                     );
-                }, 2500); // Update every 2.5 seconds
+                }, 4000); // Update every 4 seconds
                 return () => clearInterval(interval);
             }, []);
 
-            // --- NEW: Effect to handle search suggestions ---
-            useEffect(() => {
-                if (searchTerm.length > 0) {
-                    const filteredSuggestions = allProjects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-                    setSuggestions(filteredSuggestions);
-                } else {
-                    setSuggestions([]);
-                }
-            }, [searchTerm]);
-
-            // --- NEW: Effect to handle clicking outside of search ---
-            useEffect(() => {
-                function handleClickOutside(event) {
-                    if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
-                        setIsSuggestionsVisible(false);
-                    }
-                }
-                document.addEventListener("mousedown", handleClickOutside);
-                return () => document.removeEventListener("mousedown", handleClickOutside);
-            }, [searchContainerRef]);
-
-            // --- Other useEffects and handlers ---
+            useEffect(() => { if (searchTerm.length > 0) { setSuggestions(allProjects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))); } else { setSuggestions([]); } }, [searchTerm]);
+            useEffect(() => { function handleClickOutside(event) { if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) { setIsSuggestionsVisible(false); } } document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [searchContainerRef]);
             useEffect(() => { const handleScroll = () => setIsScrolled(window.scrollY > 10); window.addEventListener('scroll', handleScroll); return () => window.removeEventListener('scroll', handleScroll); }, []);
+            
             const handleApplyNow = () => window.open("https://app.outlier.ai/en/expert/opportunities", "_blank");
             const handleHire = (projectName) => { setContactMessage(`Hello, I'm interested in hiring an expert for the "${projectName}" assessment.`); document.getElementById('contact-us')?.scrollIntoView({ behavior: 'smooth' }); };
             
-            // --- NEW: Handler for selecting a project (from suggestion or search) ---
             const handleSelectProject = (projectName) => {
                 const projectData = projects.find(p => p.name.toLowerCase() === projectName.toLowerCase());
-                if(projectData) {
-                    setSearchTerm(projectName);
-                    setSelectedProjectForModal(projectData);
-                    setIsSuggestionsVisible(false);
-                }
+                if(projectData) { setSearchTerm(projectName); setSelectedProjectForModal(projectData); setIsSuggestionsVisible(false); }
             };
-
-            const handleSearchSubmit = (e) => {
-                e.preventDefault();
-                if (suggestions.length === 1) {
-                    handleSelectProject(suggestions[0].name);
-                }
-            };
+            const handleSearchSubmit = (e) => { e.preventDefault(); if (suggestions.length === 1) { handleSelectProject(suggestions[0].name); } };
             
             const navItems = [ { page: 'Home', id: 'home', icon: HomeIcon }, { page: 'Projects', id: 'active-projects', icon: ProjectIcon }, { page: 'Services', id: 'services', icon: ServicesIcon }, { page: 'Reviews', id: 'reviews', icon: ReviewsIcon }, { page: 'Contact', id: 'contact-us', icon: ContactIcon } ];
             const filteredLiveProjects = projects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -244,46 +237,25 @@
                         <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-20">
                                 <span className="text-gray-800 text-2xl font-bold">Outlier</span>
-                                
-                                {/* --- NEW: Enhanced Search Bar with Suggestions --- */}
                                 <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-end">
                                     <div className="max-w-lg w-full lg:max-w-xs" ref={searchContainerRef}>
                                         <form onSubmit={handleSearchSubmit}>
                                             <div className="relative">
                                                 <div className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center"><SearchIcon className="h-5 w-5 text-gray-400" /></div>
-                                                <input
-                                                    className="block w-full bg-white/50 py-2 pl-10 pr-3 border border-gray-300 rounded-md leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black sm:text-sm"
-                                                    placeholder="Search projects..."
-                                                    type="search"
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    onFocus={() => setIsSuggestionsVisible(true)}
-                                                    autoComplete="off"
-                                                />
+                                                <input className="block w-full bg-white/50 py-2 pl-10 pr-3 border border-gray-300 rounded-md leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black sm:text-sm" placeholder="Search projects..." type="search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onFocus={() => setIsSuggestionsVisible(true)} autoComplete="off" />
                                             </div>
                                         </form>
                                         {isSuggestionsVisible && suggestions.length > 0 && (
                                             <div className="absolute mt-1 w-full lg:max-w-xs rounded-md bg-white shadow-lg z-20 border border-gray-200">
                                                 <ul className="max-h-60 overflow-auto rounded-md py-1 text-base">
-                                                    {suggestions.map((suggestion) => (
-                                                        <li key={suggestion.name} onClick={() => handleSelectProject(suggestion.name)} className="text-gray-900 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100">
-                                                            <span className="font-normal block truncate">{suggestion.name}</span>
-                                                        </li>
-                                                    ))}
+                                                    {suggestions.map((suggestion) => ( <li key={suggestion.name} onClick={() => handleSelectProject(suggestion.name)} className="text-gray-900 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100"><span className="font-normal block truncate">{suggestion.name}</span></li> ))}
                                                 </ul>
                                             </div>
                                         )}
                                     </div>
                                 </div>
-
-                                <div className="hidden md:block">
-                                    <div className="ml-4 flex items-center md:ml-6">
-                                        {navItems.map(item => <a href={`#${item.id}`} key={item.id} className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${activePage === item.id ? 'text-gray-900 bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}><item.icon className="w-5 h-5 mr-2" />{item.page}</a>)}
-                                    </div>
-                                </div>
-                                <div className="flex md:hidden">
-                                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="ml-4 p-2 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100"><MenuIcon className="w-6 h-6" /></button>
-                                </div>
+                                <div className="hidden md:block"><div className="ml-4 flex items-center md:ml-6">{navItems.map(item => <a href={`#${item.id}`} key={item.id} className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${activePage === item.id ? 'text-gray-900 bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}><item.icon className="w-5 h-5 mr-2" />{item.page}</a>)}</div></div>
+                                <div className="flex md:hidden"><button onClick={() => setIsMenuOpen(!isMenuOpen)} className="ml-4 p-2 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100"><MenuIcon className="w-6 h-6" /></button></div>
                             </div>
                         </nav>
                         {isMenuOpen && <div className="md:hidden"><div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">{navItems.map(item => <a href={`#${item.id}`} key={item.id} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50" onClick={()=>setIsMenuOpen(false)}>{item.page}</a>)}</div></div>}
