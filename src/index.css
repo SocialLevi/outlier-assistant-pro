@@ -1,18 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #F9FAFB;
-}
-
-#grid-pattern {
-  background-image: linear-gradient(to right, #E5E7EB 1px, transparent 1px), linear-gradient(to bottom, #E5E7EB 1px, transparent 1px);
-  background-size: 2rem 2rem;
-  opacity: 0.5;
-}
-
-html {
-  scroll-behavior: smooth;
-}
