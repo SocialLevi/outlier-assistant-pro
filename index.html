@@ -126,7 +126,7 @@
         const ProjectStatusModal = ({ project, onClose }) => {
             if (!project) return null;
             const getStatusInfo = (status) => {
-                const nonActiveMessage = "Keep refreshing your dashboard/ onboard another project on Marketplace.";
+                const nonActiveMessage = "Keep refreshing your Outlier dashboard. You can also onboard suggested project on Marketplace.";
                 switch (status) {
                     case "Active": return { color: "text-green-500", message: "This project is active and has available tasks." };
                     case "Max Capacity": return { color: "text-red-500", message: nonActiveMessage };
@@ -381,7 +381,7 @@
                             </svg>
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Message Received!</h3>
-                        <p className="text-gray-600 text-sm">We have received your message. Hang tight! The review can take 2-3 business days.</p>
+                        <p className="text-gray-600 text-sm">We have received your message. Hang tight!</p>
                         <button onClick={onClose} className="mt-4 text-sm font-medium text-green-600 hover:text-green-800 transition-colors">Close</button>
                     </div>
                 </div>
