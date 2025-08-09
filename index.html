@@ -197,7 +197,6 @@
             </Section>
         );
 
-        // --- UPGRADED: Chatbot with simulated intelligence and typing indicator ---
         const Chatbot = () => {
             const [isOpen, setIsOpen] = useState(false);
             const [messages, setMessages] = useState([]);
@@ -229,7 +228,7 @@
                     const botResponse = getBotResponse(input);
                     setMessages(prev => [...prev, { sender: 'bot', text: botResponse }]);
                     setIsTyping(false);
-                }, 1500); // Simulate thinking time
+                }, 1500);
             };
 
             return (
@@ -297,6 +296,7 @@
             };
             
             const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            const allProjectsForServices = initialProjects; // Services should always list all possible projects
 
             const NavLink = ({ page, id, icon: Icon, isMobile = false }) => (
                 <button onClick={() => { 
@@ -338,7 +338,7 @@
                     <main className="relative z-10">
                         <Home setActivePage={setActivePage} />
                         <ActiveProjects setActivePage={setActivePage} onApplyNow={handleApplyNow} projects={filteredProjects} />
-                        <Services setActivePage={setActivePage} projects={initialProjects} handleHire={handleHire} />
+                        <Services setActivePage={setActivePage} projects={allProjectsForServices} handleHire={handleHire} />
                         <Reviews setActivePage={setActivePage} />
                         <ContactUs setActivePage={setActivePage} contactMessage={contactMessage} setContactMessage={setContactMessage} />
                     </main>
