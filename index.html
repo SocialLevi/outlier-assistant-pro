@@ -38,7 +38,7 @@
             position: relative;
             height: 100%;
         }
-        .flip-card-container:hover .flip-card {
+        .flip-card-container:hover .flip-card, .flip-card-container.is-flipped .flip-card {
             transform: rotateY(180deg);
         }
         .flip-card-front, .flip-card-back {
@@ -54,6 +54,7 @@
             display: flex;
             flex-direction: column;
             background-color: white;
+            transition: box-shadow 0.3s, transform 0.3s, -webkit-transform 0.3s;
         }
         .flip-card-back {
             transform: rotateY(180deg);
@@ -68,6 +69,11 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
         .project-card-wrapper {
              min-height: 250px;
+        }
+        @media (max-width: 768px) {
+            .flip-card-container:hover .flip-card {
+                transform: none; /* Disable hover flip on mobile */
+            }
         }
     </style>
 </head>
@@ -164,9 +170,27 @@
             }
         };
 
-        const ActiveProjects = ({ setActivePage, onApplyNow, projects, handlePurchaseDirectLink }) => {
+        const ActiveProjects = ({ setActivePage, onApplyNow, projects, handleRequestLink }) => {
             const SOFT_MAX_TASKS = 3500;
             const allowedCountries = ["United States", "UK", "Canada", "India", "Mexico", "Bolivia", "Italy", "Colombia", "Brazil", "Germany", "France", "Spain", "Japan", "South Korea", "Singapore"];
+            const [flippedCard, setFlippedCard] = useState(null);
+            const flipTimeoutRef = useRef(null);
+
+            const handleCardClick = (projectName) => {
+                if (window.innerWidth <= 768) {
+                    if (flippedCard === projectName) {
+                        setFlippedCard(null);
+                    } else {
+                        setFlippedCard(projectName);
+                    }
+                    if (flipTimeoutRef.current) {
+                        clearTimeout(flipTimeoutRef.current);
+                    }
+                    flipTimeoutRef.current = setTimeout(() => {
+                        setFlippedCard(null);
+                    }, 5000); // Flip back after 5 seconds on mobile
+                }
+            };
 
             return (
                 <Section id="active-projects" setActivePage={setActivePage}>
@@ -174,7 +198,11 @@
                         <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center animate-fade-in-up">Our Active Projects</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {projects.length > 0 ? projects.map((project) => (
-                                <div key={project.name} className="project-card-wrapper flip-card-container">
+                                <div 
+                                    key={project.name} 
+                                    className={`project-card-wrapper flip-card-container ${flippedCard === project.name ? 'is-flipped' : ''}`}
+                                    onClick={() => handleCardClick(project.name)}
+                                >
                                     <div className="flip-card">
                                         
                                         {/* --- FRONT SIDE of the card --- */}
@@ -201,7 +229,7 @@
                                             </div>
                                         </div>
 
-                                        {/* --- BACK SIDE of the card (appears on hover) --- */}
+                                        {/* --- BACK SIDE of the card (appears on hover/click) --- */}
                                         <div className="flip-card-back flex-grow group shadow-sm hover:shadow-xl transition-all duration-300">
                                             <div className="w-full h-full flex flex-col justify-between">
                                                 <div>
@@ -215,8 +243,8 @@
                                                     </ul>
                                                 </div>
                                                 <div>
-                                                    <button onClick={() => handlePurchaseDirectLink(project.name)} className="w-full text-center text-white font-semibold py-2 rounded-lg bg-black hover:bg-gray-800 transition-colors">
-                                                        Purchase Direct Link
+                                                    <button onClick={(e) => { e.stopPropagation(); handleRequestLink(project.name); }} className="w-full text-center text-white font-semibold py-3 rounded-lg bg-black hover:bg-gray-800 transition-colors">
+                                                        Request Link
                                                     </button>
                                                 </div>
                                             </div>
@@ -400,11 +428,10 @@
             const handleSelectProject = (projectName) => { const projectData = projects.find(p => p.name.toLowerCase() === projectName.toLowerCase()); if(projectData) { setSearchTerm(projectName); setSelectedProjectForModal(projectData); setIsSuggestionsVisible(false); } };
             const handleSearchSubmit = (e) => { e.preventDefault(); if (suggestions.length === 1) { handleSelectProject(suggestions[0].name); } };
 
-            const handlePurchaseDirectLink = (projectName) => {
-                const message = `I would like to purchase a direct link to the "${projectName}" project. Please send me the details and payment information.`;
+            const handleRequestLink = (projectName) => {
+                const message = `Hello, I'm interested in the direct link for the "${projectName}" project. Please send me the details.`;
                 setContactMessage(message);
                 document.getElementById('contact-us')?.scrollIntoView({ behavior: 'smooth' });
-                alert(message);
             };
             
             const closeModalAndReset = () => {
@@ -447,7 +474,7 @@
                     </header>
                     <main className="relative z-10">
                         <Home setActivePage={setActivePage} />
-                        <ActiveProjects setActivePage={setActivePage} onApplyNow={handleApplyNow} projects={filteredLiveProjects} handlePurchaseDirectLink={handlePurchaseDirectLink} />
+                        <ActiveProjects setActivePage={setActivePage} onApplyNow={handleApplyNow} projects={filteredLiveProjects} handleRequestLink={handleRequestLink} />
                         <Services setActivePage={setActivePage} projects={filteredServiceProjects} handleHire={handleHire} />
                         <Reviews setActivePage={setActivePage} />
                         <ContactUs setActivePage={setActivePage} contactMessage={contactMessage} setContactMessage={setContactMessage} />
