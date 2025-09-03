@@ -262,7 +262,7 @@
 
     <script type="module">
         // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { 
             getAuth, 
             onAuthStateChanged,
@@ -274,22 +274,23 @@
             signInWithCustomToken,
             signInAnonymously,
             sendPasswordResetEmail
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
         import {
             getFirestore,
             doc,
             getDoc,
             setDoc,
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
         const VERCEL_FALLBACK_CONFIG = {
-            apiKey: "AIzaSyCuy-81eqazvX3T9YBR-GWYDy7pal8Qnms",
-            authDomain: "sample-firebase-ai-app-f9512.firebaseapp.com",
-            projectId: "sample-firebase-ai-app-f9512",
-            storageBucket: "sample-firebase-ai-app-f9512.firebasestorage.app",
-            messagingSenderId: "5378166984",
-            appId: "1:5378166984:web:645064d773681120ee55fd"
+            apiKey: "AIzaSyCBj0OcUbYYMPlHNZoyokIpKhlKpWUkU_Q",
+            authDomain: "outlier-420a8.firebaseapp.com",
+            projectId: "outlier-420a8",
+            storageBucket: "outlier-420a8.firebasestorage.app",
+            messagingSenderId: "449895404853",
+            appId: "1:449895404853:web:9bb10a3add516a1620287c",
+            measurementId: "G-TYXVKEEQRF"
         };
 
         const firebaseConfigString = typeof __firebase_config !== 'undefined' 
@@ -873,7 +874,7 @@
         async function generateBackgroundImage() {
             const bgImage = document.getElementById('auth-bg-image');
             const apiKey = ""; // Canvas will provide this
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
 
             const prompt = "A modern, abstract background with flowing teal and dark gray lines, minimalist digital art, cinematic lighting.";
 
@@ -911,3 +912,4 @@
     </script>
 </body>
 </html>
+
