@@ -25,6 +25,22 @@
     </style>
 </head>
 <body class="h-full text-white bg-gray-900">
+    <!-- Anti-inspection script -->
+    <script>
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Disable keyboard shortcuts for developer tools
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F12' || 
+               (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'i')) || 
+               (event.ctrlKey && event.shiftKey && (event.key === 'J' || event.key === 'j')) || 
+               (event.ctrlKey && (event.key === 'U' || event.key === 'u'))) {
+                event.preventDefault();
+            }
+        });
+    </script>
+    
     <!-- Full screen background container for the login page -->
     <div id="auth-background-container" class="fixed inset-0 z-0 transition-opacity duration-1000 opacity-0">
         <div class="absolute inset-0 bg-black/60"></div> <!-- Dark overlay -->
@@ -102,7 +118,7 @@
                         <div class="w-full border-t border-gray-600"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="bg-gray-800 px-2 text-gray-400" style="background-color: transparent;">Or continue with</span>
+                        <span class="bg-transparent px-2 text-gray-400">Or continue with</span>
                     </div>
                 </div>
 
@@ -141,15 +157,47 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden md:block">
-                                <div class="ml-4 flex items-center md:ml-6">
-                                    <span id="user-email" class="text-gray-400 text-sm mr-4"></span>
-                                    <button id="signout-button" class="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                                        </svg>
-                                    </button>
+                            <div class="flex items-center">
+                                <div class="hidden md:block">
+                                    <div class="ml-4 flex items-center md:ml-6">
+                                        <span id="user-email" class="text-gray-400 text-sm mr-4"></span>
+                                        <button id="signout-button" class="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
+                                <div class="-mr-2 flex md:hidden">
+                                     <!-- Mobile menu button -->
+                                     <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800" aria-controls="mobile-menu" aria-expanded="false">
+                                        <span class="sr-only">Open main menu</span>
+                                        <svg id="hamburger-icon" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                        </svg>
+                                        <svg id="close-icon" class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Mobile menu, show/hide based on menu state. -->
+                    <div class="md:hidden hidden" id="mobile-menu">
+                        <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+                            <a href="#about" class="mobile-nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">About Us</a>
+                            <a href="#menu" class="mobile-nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Menu</a>
+                            <a href="#projects" class="mobile-nav-link block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Projects</a>
+                        </div>
+                        <div class="border-t border-gray-700 pb-3 pt-4">
+                            <div class="flex items-center px-5">
+                                <div class="ml-3">
+                                    <div id="mobile-user-email" class="text-base font-medium leading-none text-white"></div>
+                                </div>
+                            </div>
+                            <div class="mt-3 space-y-1 px-2">
+                                <button id="mobile-signout-button" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">Sign out</button>
                             </div>
                         </div>
                     </div>
@@ -257,11 +305,25 @@
         let isBgImageGenerated = false;
 
         // --- Setup Functions ---
+        function setAuthError(message) {
+            authError.textContent = message;
+            authError.classList.add('text-red-400');
+            authError.classList.remove('text-green-400');
+        }
+
+        function setAuthSuccess(message) {
+            authError.textContent = message;
+            authError.classList.remove('text-red-400');
+            authError.classList.add('text-green-400');
+        }
+
         function setupPasswordToggle(inputId, toggleButtonId, eyeIconId, eyeSlashIconId) {
             const passwordInput = document.getElementById(inputId);
             const toggleButton = document.getElementById(toggleButtonId);
             const eyeIcon = document.getElementById(eyeIconId);
             const eyeSlashIcon = document.getElementById(eyeSlashIconId);
+
+            if (!toggleButton) return; // Guard against element not being in DOM
 
             toggleButton.addEventListener('click', () => {
                 if (passwordInput.type === 'password') {
@@ -286,6 +348,7 @@
                 }
             } catch (error) {
                 console.error("Initial authentication failed:", error);
+                setAuthError("Could not connect to services. Please refresh.");
             }
         }
 
@@ -298,6 +361,7 @@
                 dashboardSection.classList.remove('hidden');
                 authBg.classList.add('opacity-0'); // Hide background
                 document.getElementById('user-email').textContent = user.email;
+                document.getElementById('mobile-user-email').textContent = user.email;
                 await main(); // Initialize dashboard
             } else {
                 currentUser = null;
@@ -315,47 +379,50 @@
             loadingSpinner.classList.add('hidden');
         });
         
-        // Toggle between login and signup forms
+        // --- Auth Form UI Logic ---
+        function showForm(formToShow) {
+            loginForm.classList.add('hidden');
+            signupForm.classList.add('hidden');
+            forgotPasswordForm.classList.add('hidden');
+            formToShow.classList.remove('hidden');
+            authError.textContent = '';
+        }
+
         toggleAuthLink.addEventListener('click', (e) => {
             e.preventDefault();
             isSignup = !isSignup;
-            loginForm.classList.toggle('hidden', isSignup);
-            signupForm.classList.toggle('hidden', !isSignup);
-            toggleAuthLink.textContent = isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up";
-            authError.textContent = '';
+            if (isSignup) {
+                showForm(signupForm);
+                toggleAuthLink.textContent = 'Already have an account? Sign in';
+            } else {
+                showForm(loginForm);
+                toggleAuthLink.textContent = "Don't have an account? Sign up";
+            }
         });
 
         document.getElementById('forgot-password-link').addEventListener('click', (e) => {
             e.preventDefault();
-            loginForm.classList.add('hidden');
-            signupForm.classList.add('hidden');
-            forgotPasswordForm.classList.remove('hidden');
-            toggleAuthLink.classList.add('hidden'); // Hide the signup toggle
-            authError.textContent = '';
+            showForm(forgotPasswordForm);
+            toggleAuthLink.classList.add('hidden');
         });
 
         document.getElementById('back-to-login-link').addEventListener('click', (e) => {
             e.preventDefault();
-            forgotPasswordForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            toggleAuthLink.classList.remove('hidden'); // Show the signup toggle
-            authError.textContent = '';
+            isSignup = false;
+            showForm(loginForm);
+            toggleAuthLink.classList.remove('hidden');
+            toggleAuthLink.textContent = "Don't have an account? Sign up";
         });
-
+        
+        // --- Auth Action Logic ---
         document.getElementById('login-button').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             authError.textContent = '';
             try {
-                // This function securely communicates with the Firebase backend.
-                // It automatically handles the check to confirm if the user exists
-                // and if the provided password is correct.
-                // If the login is unsuccessful (user not found, wrong password),
-                // it throws an error which is caught by the 'catch' block below.
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                // Display the error message returned from Firebase.
-                authError.textContent = error.message;
+                setAuthError(error.message);
             }
         });
 
@@ -366,7 +433,7 @@
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                authError.textContent = error.message;
+                setAuthError(error.message);
             }
         });
 
@@ -375,13 +442,9 @@
             authError.textContent = '';
             try {
                 await sendPasswordResetEmail(auth, email);
-                authError.textContent = 'Password reset email sent! Check your inbox.';
-                authError.classList.remove('text-red-400');
-                authError.classList.add('text-green-400');
+                setAuthSuccess('Password reset email sent! Check your inbox.');
             } catch (error) {
-                authError.textContent = error.message;
-                authError.classList.add('text-red-400');
-                authError.classList.remove('text-green-400');
+                setAuthError(error.message);
             }
         });
 
@@ -391,20 +454,45 @@
             try {
                 await signInWithPopup(auth, provider);
             } catch (error) {
-                authError.textContent = error.message;
+                setAuthError(error.message);
             }
         });
         
-        document.getElementById('signout-button').addEventListener('click', () => {
-            signOut(auth);
-        });
+        function handleSignOut() {
+             signOut(auth);
+        }
+
+        document.getElementById('signout-button').addEventListener('click', handleSignOut);
+        document.getElementById('mobile-signout-button').addEventListener('click', handleSignOut);
         
         
         // --- Dashboard Logic ---
         async function main() {
             const navLinks = document.querySelectorAll('.nav-link');
             const pageContent = document.getElementById('page-content');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            const closeIcon = document.getElementById('close-icon');
             
+            // --- Mobile Menu Toggle ---
+            mobileMenuButton.addEventListener('click', () => {
+                const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                hamburgerIcon.classList.toggle('hidden');
+                closeIcon.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    hamburgerIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                    mobileMenuButton.setAttribute('aria-expanded', 'false');
+                });
+            });
+
             function updateActiveLink(hash) {
                 navLinks.forEach(link => {
                     if (link.hash === hash) {
@@ -448,34 +536,34 @@
         // --- Projects Page Logic ---
         const assessments = [
             {
-                prompt: "Explain the concept of 'machine learning' to a 5-year-old.",
-                responseA: "It's when computers learn from looking at lots of pictures and numbers, like how you learn from looking at picture books, to get smarter at guessing things.",
-                responseB: "Machine learning is a subfield of artificial intelligence that utilizes algorithms to analyze data, learn from it, and then make a determination or prediction about something new.",
-                expertHint: "Response A is better. It uses a simple analogy (picture books) suitable for a 5-year-old, avoiding technical jargon. Response B is too complex and technical for the target audience."
+                prompt: "Critically assess John Searle's 'Chinese Room' argument against Strong AI in the context of modern Large Language Models (LLMs) like GPT-4. Does the argument retain its validity?",
+                responseA: "Searle's argument is outdated. The sheer scale and emergent capabilities of models like GPT-4 demonstrate a form of understanding that transcends simple symbol manipulation. Their ability to generate coherent, context-aware text suggests they are not just syntax engines but have achieved a level of semantic comprehension.",
+                responseB: "The 'Chinese Room' argument remains fundamentally valid. LLMs, despite their complexity, are sophisticated statistical pattern matchers operating on syntax, not semantics. They manipulate symbols based on probabilistic relationships learned from data, without genuine consciousness or intentionality, making them a more advanced, but functionally equivalent, version of the room.",
+                expertHint: "A PhD-level analysis must recognize that LLMs operate on statistical patterns without true semantic understanding, which supports Searle's core claim. Therefore, Response B is philosophically more sound. A strong justification for B would highlight the distinction between functional simulation and genuine intentionality. A justification for A would be incorrect as it conflates complex pattern matching with semantic comprehension."
             },
             {
-                prompt: "Write a short, exciting opening sentence for a story about a space pirate.",
-                responseA: "The notorious Captain Valerius boarded the starliner.",
-                responseB: "The alarms screamed through the corridors of the starship *Celestial Dream* the moment Captain Kaelen's magnetic boots slammed onto the bridge, his laughter echoing in the sudden silence.",
-                expertHint: "Response B is significantly better. It uses strong verbs ('screamed', 'slammed'), sensory details (alarms, laughter), and creates immediate action and character, which is more exciting."
+                prompt: "Explain the core paradox of black hole information loss and summarize the leading proposed solution derived from the AdS/CFT correspondence.",
+                responseA: "The paradox is that black holes seem to destroy information, which quantum mechanics forbids. Hawking radiation, the stuff that leaks out, is random and contains no information. The solution from string theory is that the information might be stored in some other dimension we can't see.",
+                responseB: "The paradox arises from the conflict between general relativity's 'no-hair theorem' and the principle of unitarity in quantum mechanics. Unitarity demands that information is conserved, but Hawking radiation appears thermal and information-free. The AdS/CFT correspondence suggests a holographic principle, where the information of a black hole isn't lost but is holographically encoded on its event horizon, a lower-dimensional boundary, thus preserving unitarity.",
+                expertHint: "Response B is vastly superior as it uses precise terminology (unitarity, no-hair theorem, holographic principle) and correctly identifies the central conflict and the mechanism of the proposed solution. Response A is a pop-science oversimplification and is incorrect for this level of analysis."
             },
             {
-                prompt: "What are three key benefits of switching to renewable energy sources?",
-                responseA: "Switching to renewable energy helps the planet. It makes the air cleaner for us to breathe, doesn't run out like gas, and can create new jobs for people building windmills and solar panels.",
-                responseB: "The primary benefits are: 1) Environmental protection through reduced greenhouse gas emissions. 2) Energy security by diversifying away from finite fossil fuels. 3) Economic advantages via job creation in the green sector.",
-                expertHint: "Both are good, but Response A is slightly better for general audiences as it's more conversational and less jargon-heavy ('helps the planet', 'cleaner air'). Response B is more formal and academic. A good justification could argue for either, but must recognize the tonal difference."
+                prompt: "Analyze the use of intertextuality in T.S. Eliot's 'The Waste Land' as a reflection of post-war modernist fragmentation.",
+                responseA: "The poem uses a lot of quotes and references to other books. This shows that European culture was broken and in pieces after World War I, and Eliot is showing all the broken parts.",
+                responseB: "Eliot employs a mosaic of literary and cultural allusions, not as mere ornamentation, but to construct a fragmented consciousness reflecting a collapsed cultural narrative. By juxtaposing classical myths with contemporary squalor, he illustrates the disintegration of a coherent tradition, forcing the reader to actively participate in the difficult construction of meaning from cultural ruins.",
+                expertHint: "Response B provides a deep, PhD-level analysis. It uses key literary terms correctly ('mosaic', 'juxtaposing', 'construction of meaning') and understands the active role the reader must play, which is a core concept of modernist literature. Response A grasps the basic idea but lacks the necessary analytical depth and terminology."
             },
             {
-                prompt: "Provide a two-sentence horror story.",
-                responseA: "I woke up to hear knocking on the glass. At first, I thought it was the window until I heard it come from the mirror again.",
-                responseB: "The last thing I saw was my alarm clock flashing 12:07 before she pushed her long rotting nails through my chest, her other hand muffling my screams. I sat bolt upright, relieved it was only a dream, but as I saw my alarm clock read 12:06, I heard my closet door creak open.",
-                expertHint: "Both are classic horror tropes. Response B is arguably better as it builds more suspense and has a more complex narrative structure with the false relief moment. A good justification should point this out."
+                prompt: "Critically evaluate the Lucas critique's implications for macroeconomic policy-making, particularly in the context of modern Dynamic Stochastic General Equilibrium (DSGE) models.",
+                responseA: "The Lucas critique proved that you can't trust old economic models because people aren't stupid; they change how they act when the government changes a policy. So you can't use past data to predict the future.",
+                responseB: "The Lucas critique fundamentally challenged traditional Keynesian macroeconometric models by asserting that policy interventions alter agents' expectations and behaviors, thus invalidating model parameters previously assumed to be structural. Modern DSGE models attempt to address this by building from microfoundations with rational expectations, but they remain susceptible to the critique if their 'deep' parameters regarding preferences and technology are not truly policy-invariant or if agents' expectation formation is misspecified.",
+                expertHint: "Response B is the expert answer. It correctly identifies the target of the critique (Keynesian models), the mechanism (agents' expectations and structural parameters), and correctly explains how DSGE models try—and sometimes fail—to solve it. Response A is an oversimplification that misses the key concepts of structural parameters and microfoundations."
             },
             {
-                prompt: "Summarize the plot of 'Hamlet' in one sentence.",
-                responseA: "A young prince of Denmark, Hamlet, feigns madness to exact revenge on his uncle, who he believes murdered his father to seize the throne and marry his mother.",
-                responseB: "Hamlet is a tragedy by William Shakespeare about a prince who sees his father's ghost and then spends the rest of the play trying to decide if he should kill his uncle, which leads to everyone dying.",
-                expertHint: "Response A is better. It is a more formal and complete summary, capturing the core elements (revenge, feigned madness, usurpation) concisely. Response B is too colloquial and its ending ('leads to everyone dying') is an oversimplification, although not entirely inaccurate."
+                prompt: "Compare and contrast the principles and primary use cases of BLAST (Basic Local Alignment Search Tool) and the Smith-Waterman algorithm for sequence alignment.",
+                responseA: "Both are tools for comparing DNA sequences. BLAST is just a faster version of Smith-Waterman that you use for big databases. Smith-Waterman is more accurate for finding the best match but it's too slow for most things.",
+                responseB: "The Smith-Waterman algorithm is a dynamic programming method that mathematically guarantees finding the optimal local alignment (highest score), making it the gold standard for sensitivity. Its quadratic time complexity, however, makes it computationally prohibitive for large-scale searches. In contrast, BLAST is a heuristic algorithm that sacrifices this guaranteed optimality for immense speed by finding short, high-scoring word 'seeds' to initiate alignments, making it the standard for rapid database homology searches.",
+                expertHint: "Response B is the correct, PhD-level comparison. It correctly identifies the core algorithmic difference (dynamic programming vs. heuristic), the fundamental trade-off (guaranteed optimality vs. speed), and the precise technical reason for BLAST's speed ('word seeds'). Response A is a superficial summary that lacks critical details."
             }
         ];
         let currentAssessmentIndex = 0;
@@ -747,6 +835,3 @@
     </script>
 </body>
 </html>
-
-
-
