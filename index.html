@@ -299,8 +299,14 @@
         } catch(error) {
             console.error("Firebase initialization failed:", error);
             document.getElementById('loading-spinner').classList.add('hidden');
-            document.getElementById('auth-section').classList.remove('hidden');
-            document.getElementById('auth-error').textContent = "Failed to connect to services. Please check configuration.";
+            const authSection = document.getElementById('auth-section');
+            if (authSection) {
+                authSection.classList.remove('hidden');
+                const authError = document.getElementById('auth-error');
+                if (authError) {
+                    authError.textContent = "Failed to connect to services. Please check configuration.";
+                }
+            }
         }
         
 
@@ -322,15 +328,19 @@
 
         // --- Setup Functions ---
         function setAuthError(message) {
-            authError.textContent = message;
-            authError.classList.add('text-red-400');
-            authError.classList.remove('text-green-400');
+            if (authError) {
+                authError.textContent = message;
+                authError.classList.add('text-red-400');
+                authError.classList.remove('text-green-400');
+            }
         }
 
         function setAuthSuccess(message) {
-            authError.textContent = message;
-            authError.classList.remove('text-red-400');
-            authError.classList.add('text-green-400');
+            if (authError) {
+                authError.textContent = message;
+                authError.classList.remove('text-red-400');
+                authError.classList.add('text-green-400');
+            }
         }
 
         function setupPasswordToggle(inputId, toggleButtonId, eyeIconId, eyeSlashIconId) {
@@ -369,145 +379,169 @@
             }
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            const authBg = document.getElementById('auth-background-container');
-            if (user && user.email) {
-                currentUser = user;
-                authSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-                authBg.classList.add('opacity-0');
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('mobile-user-email').textContent = user.email;
-                if (!isDashboardInitialized) {
-                    await main();
-                    isDashboardInitialized = true;
+        function setupAuthListeners() {
+            onAuthStateChanged(auth, async (user) => {
+                const authBg = document.getElementById('auth-background-container');
+                if (user && user.email) {
+                    currentUser = user;
+                    authSection.classList.add('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    authBg.classList.add('opacity-0');
+                    document.getElementById('user-email').textContent = user.email;
+                    document.getElementById('mobile-user-email').textContent = user.email;
+                    if (!isDashboardInitialized) {
+                        await main();
+                        isDashboardInitialized = true;
+                    }
+                } else {
+                    currentUser = null;
+                    isDashboardInitialized = false;
+                    authSection.classList.remove('hidden');
+                    dashboardSection.classList.add('hidden');
+                    authBg.classList.remove('opacity-0');
+                    if (!isBgImageGenerated) {
+                        generateBackgroundImage();
+                        isBgImageGenerated = true;
+                    }
+                    setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
+                    setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
                 }
-            } else {
-                currentUser = null;
-                isDashboardInitialized = false;
-                authSection.classList.remove('hidden');
-                dashboardSection.classList.add('hidden');
-                authBg.classList.remove('opacity-0');
-                if (!isBgImageGenerated) {
-                    generateBackgroundImage();
-                    isBgImageGenerated = true;
-                }
-                setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
-                setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
-            }
-            loadingSpinner.classList.add('hidden');
-        });
+                loadingSpinner.classList.add('hidden');
+            });
+        }
         
         // --- Auth Form UI Logic ---
-        function showForm(formToShow) {
-            loginForm.classList.add('hidden');
-            signupForm.classList.add('hidden');
-            forgotPasswordForm.classList.add('hidden');
-            formToShow.classList.remove('hidden');
-            authError.textContent = '';
+        if (toggleAuthLink) {
+            toggleAuthLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isSignup = !isSignup;
+                if (isSignup) {
+                    showForm(signupForm);
+                    toggleAuthLink.textContent = 'Already have an account? Sign in';
+                } else {
+                    showForm(loginForm);
+                    toggleAuthLink.textContent = "Don't have an account? Sign up";
+                }
+            });
         }
 
-        toggleAuthLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isSignup = !isSignup;
-            if (isSignup) {
-                showForm(signupForm);
-                toggleAuthLink.textContent = 'Already have an account? Sign in';
-            } else {
+        if (document.getElementById('forgot-password-link')) {
+             document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                showForm(forgotPasswordForm);
+                if (toggleAuthLink) toggleAuthLink.classList.add('hidden');
+            });
+        }
+
+       if(document.getElementById('back-to-login-link')) {
+            document.getElementById('back-to-login-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                isSignup = false;
                 showForm(loginForm);
-                toggleAuthLink.textContent = "Don't have an account? Sign up";
-            }
-        });
-
-        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm(forgotPasswordForm);
-            toggleAuthLink.classList.add('hidden');
-        });
-
-        document.getElementById('back-to-login-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            isSignup = false;
-            showForm(loginForm);
-            toggleAuthLink.classList.remove('hidden');
-            toggleAuthLink.textContent = "Don't have an account? Sign up";
-        });
+                if (toggleAuthLink) {
+                    toggleAuthLink.classList.remove('hidden');
+                    toggleAuthLink.textContent = "Don't have an account? Sign up";
+                }
+            });
+       }
+        
+        function showForm(formToShow) {
+            if (loginForm) loginForm.classList.add('hidden');
+            if (signupForm) signupForm.classList.add('hidden');
+            if (forgotPasswordForm) forgotPasswordForm.classList.add('hidden');
+            if (formToShow) formToShow.classList.remove('hidden');
+            setAuthError('');
+        }
         
         // --- Auth Action Logic ---
-        document.getElementById('login-button').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            authError.textContent = '';
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                setAuthError(error.message);
-            }
-        });
+        if(document.getElementById('login-button')){
+            document.getElementById('login-button').addEventListener('click', async () => {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                setAuthError('');
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    setAuthError(error.message);
+                }
+            });
+        }
 
-        document.getElementById('signup-button').addEventListener('click', async () => {
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            authError.textContent = '';
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                setAuthError(error.message);
-            }
-        });
+        if(document.getElementById('signup-button')){
+            document.getElementById('signup-button').addEventListener('click', async () => {
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                setAuthError('');
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    setAuthError(error.message);
+                }
+            });
+        }
 
-        document.getElementById('send-reset-button').addEventListener('click', async () => {
-            const email = document.getElementById('reset-email').value;
-            authError.textContent = '';
-            try {
-                await sendPasswordResetEmail(auth, email);
-                setAuthSuccess('Password reset email sent! Check your inbox.');
-            } catch (error) {
-                setAuthError(error.message);
-            }
-        });
+        if(document.getElementById('send-reset-button')){
+            document.getElementById('send-reset-button').addEventListener('click', async () => {
+                const email = document.getElementById('reset-email').value;
+                setAuthError('');
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    setAuthSuccess('Password reset email sent! Check your inbox.');
+                } catch (error) {
+                    setAuthError(error.message);
+                }
+            });
+        }
 
-        document.getElementById('google-signin-button').addEventListener('click', async () => {
-            const provider = new GoogleAuthProvider();
-            authError.textContent = '';
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                setAuthError(error.message);
-            }
-        });
+        if(document.getElementById('google-signin-button')){
+            document.getElementById('google-signin-button').addEventListener('click', async () => {
+                const provider = new GoogleAuthProvider();
+                setAuthError('');
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    setAuthError(error.message);
+                }
+            });
+        }
         
         function handleSignOut() {
              signOut(auth);
         }
 
-        document.getElementById('signout-button').addEventListener('click', handleSignOut);
-        document.getElementById('mobile-signout-button').addEventListener('click', handleSignOut);
+        if(document.getElementById('signout-button')) document.getElementById('signout-button').addEventListener('click', handleSignOut);
+        if(document.getElementById('mobile-signout-button')) document.getElementById('mobile-signout-button').addEventListener('click', handleSignOut);
         
         
         // --- Dashboard Logic ---
         async function main() {
             const navLinks = document.querySelectorAll('.nav-link');
-            const pageContent = document.getElementById('page-content');
-            const mobileMenu = document.getElementById('mobile-menu');
             const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const hamburgerIcon = document.getElementById('hamburger-icon');
-            const closeIcon = document.getElementById('close-icon');
             
-            mobileMenuButton.addEventListener('click', () => {
-                const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
-                mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
-                mobileMenu.classList.toggle('hidden');
-                hamburgerIcon.classList.toggle('hidden');
-                closeIcon.classList.toggle('hidden');
-            });
+            if(mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    const hamburgerIcon = document.getElementById('hamburger-icon');
+                    const closeIcon = document.getElementById('close-icon');
+                    const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                    mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                    mobileMenu.classList.toggle('hidden');
+                    hamburgerIcon.classList.toggle('hidden');
+                    closeIcon.classList.toggle('hidden');
+                });
+            }
             
             document.querySelectorAll('.mobile-nav-link').forEach(link => {
                 link.addEventListener('click', () => {
-                    mobileMenu.classList.add('hidden');
-                    hamburgerIcon.classList.remove('hidden');
-                    closeIcon.classList.add('hidden');
-                    mobileMenuButton.setAttribute('aria-expanded', 'false');
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    const mobileMenuButton = document.getElementById('mobile-menu-button');
+                    const hamburgerIcon = document.getElementById('hamburger-icon');
+                    const closeIcon = document.getElementById('close-icon');
+
+                    if(mobileMenu) mobileMenu.classList.add('hidden');
+                    if(hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+                    if(closeIcon) closeIcon.classList.add('hidden');
+                    if(mobileMenuButton) mobileMenuButton.setAttribute('aria-expanded', 'false');
                 });
             });
 
@@ -524,19 +558,30 @@
             }
             
             async function loadContent() {
-                const hash = window.location.hash || '#about';
-                updateActiveLink(hash);
-                let templateId;
-                switch(hash) {
-                    case '#menu': templateId = 'menu-template'; break;
-                    case '#projects': templateId = 'projects-template'; break;
-                    case '#about': default: templateId = 'about-template'; break;
-                }
-                const template = document.getElementById(templateId);
-                pageContent.innerHTML = template.innerHTML;
+                try {
+                    const hash = window.location.hash || '#about';
+                    updateActiveLink(hash);
+                    let templateId;
+                    switch(hash) {
+                        case '#menu': templateId = 'menu-template'; break;
+                        case '#projects': templateId = 'projects-template'; break;
+                        case '#about': default: templateId = 'about-template'; break;
+                    }
+                    const template = document.getElementById(templateId);
+                    const pageContent = document.getElementById('page-content');
+                    if(template && pageContent) {
+                        pageContent.innerHTML = template.innerHTML;
+                    }
 
-                if (hash === '#projects') {
-                    await setupProjectsPage();
+                    if (hash === '#projects') {
+                        await setupProjectsPage();
+                    }
+                } catch (error) {
+                    console.error("Error loading page content:", error);
+                    const pageContent = document.getElementById('page-content');
+                    if(pageContent) {
+                        pageContent.innerHTML = `<div class="text-center text-red-400">Failed to load content. Please try again.</div>`;
+                    }
                 }
             }
             
@@ -592,76 +637,85 @@
                 return;
             }
 
-            evaluationContainer.classList.remove('hidden');
-            projectsListContainer.classList.add('hidden');
+            if(evaluationContainer) evaluationContainer.classList.remove('hidden');
+            if(projectsListContainer) projectsListContainer.classList.add('hidden');
             renderCurrentAssessment();
 
             const submitButton = document.getElementById('submit-evaluation-button');
-            submitButton.addEventListener('click', handleAssessmentSubmission);
+            if(submitButton) {
+                submitButton.addEventListener('click', handleAssessmentSubmission);
+            }
         }
         
         function renderCurrentAssessment() {
             const assessment = assessments[currentAssessmentIndex];
             const contentEl = document.getElementById('assessment-content');
             
-            contentEl.innerHTML = `
-                <h2 class="text-xl font-bold tracking-tight text-white">Assessment ${currentAssessmentIndex + 1} of ${assessments.length}</h2>
-                <p class="mt-2 text-gray-400">Read the prompt and the two AI responses. Rate which response is better and justify your answer.</p>
-                
-                <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
-                    <h3 class="font-semibold text-teal-300">Prompt:</h3>
-                    <p class="mt-1 text-white">"${assessment.prompt}"</p>
-                </div>
-
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                        <h4 class="font-semibold text-gray-300">Response A</h4>
-                        <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseA}</p>
+            if(contentEl) {
+                contentEl.innerHTML = `
+                    <h2 class="text-xl font-bold tracking-tight text-white">Assessment ${currentAssessmentIndex + 1} of ${assessments.length}</h2>
+                    <p class="mt-2 text-gray-400">Read the prompt and the two AI responses. Rate which response is better and justify your answer.</p>
+                    
+                    <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
+                        <h3 class="font-semibold text-teal-300">Prompt:</h3>
+                        <p class="mt-1 text-white">"${assessment.prompt}"</p>
                     </div>
-                    <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                        <h4 class="font-semibold text-gray-300">Response B</h4>
-                        <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseB}</p>
-                    </div>
-                </div>
 
-                <div class="mt-6">
-                    <h3 class="font-semibold text-white">1. Which response is better? (1 = A is much better, 5 = B is much better)</h3>
-                    <fieldset class="mt-2">
-                        <div class="flex items-center justify-between sm:justify-start sm:space-x-4">
-                            <span class="text-sm text-gray-400">A</span>
-                            <div class="flex items-center space-x-2">
-                                ${[1,2,3,4,5].map(rating => `
-                                <label for="rating-${rating}" class="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-700 hover:bg-gray-600 cursor-pointer transition-all duration-200 peer-checked:bg-teal-700">
-                                    <input type="radio" name="rating" id="rating-${rating}" value="${rating}" class="peer absolute opacity-0">
-                                    <span class="text-white peer-checked:text-white peer-checked:font-bold">${rating}</span>
-                                </label>
-                                `).join('')}
-                            </div>
-                            <span class="text-sm text-gray-400">B</span>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h4 class="font-semibold text-gray-300">Response A</h4>
+                            <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseA}</p>
                         </div>
-                    </fieldset>
-                </div>
-                
-                <div class="mt-6">
-                    <h3 class="font-semibold text-white">2. Justify your rating:</h3>
-                    <textarea id="assessment-justification" rows="4" class="mt-2 block w-full rounded-md border-0 bg-gray-900/80 p-3 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm" placeholder="Explain your reasoning here..."></textarea>
-                </div>
-            `;
+                        <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h4 class="font-semibold text-gray-300">Response B</h4>
+                            <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseB}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-white">1. Which response is better? (1 = A is much better, 5 = B is much better)</h3>
+                        <fieldset class="mt-2">
+                            <div class="flex items-center justify-between sm:justify-start sm:space-x-4">
+                                <span class="text-sm text-gray-400">A</span>
+                                <div class="flex items-center space-x-2">
+                                    ${[1,2,3,4,5].map(rating => `
+                                    <label for="rating-${rating}" class="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-700 hover:bg-gray-600 cursor-pointer transition-all duration-200 peer-checked:bg-teal-700">
+                                        <input type="radio" name="rating" id="rating-${rating}" value="${rating}" class="peer absolute opacity-0">
+                                        <span class="text-white peer-checked:text-white peer-checked:font-bold">${rating}</span>
+                                    </label>
+                                    `).join('')}
+                                </div>
+                                <span class="text-sm text-gray-400">B</span>
+                            </div>
+                        </fieldset>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-white">2. Justify your rating:</h3>
+                        <textarea id="assessment-justification" rows="4" class="mt-2 block w-full rounded-md border-0 bg-gray-900/80 p-3 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm" placeholder="Explain your reasoning here..."></textarea>
+                    </div>
+                `;
+            }
         }
 
         async function handleAssessmentSubmission() {
             const selectedRating = document.querySelector('input[name="rating"]:checked');
-            const justification = document.getElementById('assessment-justification').value.trim();
+            const justificationInput = document.getElementById('assessment-justification');
+            const justification = justificationInput ? justificationInput.value.trim() : '';
             const resultEl = document.getElementById('evaluation-result');
 
             if (!selectedRating) {
-                resultEl.textContent = 'Please select a rating from 1 to 5.';
-                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                if(resultEl) {
+                    resultEl.textContent = 'Please select a rating from 1 to 5.';
+                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                }
                 return;
             }
             if (justification.length < 15) {
-                resultEl.textContent = 'Please provide a more detailed justification (at least 15 characters).';
-                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                if(resultEl){
+                    resultEl.textContent = 'Please provide a more detailed justification (at least 15 characters).';
+                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                }
                 return;
             }
 
@@ -669,10 +723,10 @@
             const submitBtnText = document.getElementById('submit-btn-text');
             const submitSpinner = document.getElementById('submit-spinner');
             
-            submitButton.disabled = true;
-            submitBtnText.textContent = 'Grading...';
-            submitSpinner.classList.remove('hidden');
-            resultEl.textContent = '';
+            if(submitButton) submitButton.disabled = true;
+            if(submitBtnText) submitBtnText.textContent = 'Grading...';
+            if(submitSpinner) submitSpinner.classList.remove('hidden');
+            if(resultEl) resultEl.textContent = '';
 
             try {
                 const aiResult = await gradeWithAI(assessments[currentAssessmentIndex], selectedRating.value, justification);
@@ -680,39 +734,48 @@
                 if (aiResult.passed) {
                     currentAssessmentIndex++;
                     if (currentAssessmentIndex >= assessments.length) {
-                        resultEl.textContent = 'Congratulations! You have passed all assessments.';
-                        resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                        if(resultEl) {
+                            resultEl.textContent = 'Congratulations! You have passed all assessments.';
+                            resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                        }
                         const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
                         await setDoc(userProgressRef, { assessments_passed: true });
                         setTimeout(showProjects, 2000);
                     } else {
-                        resultEl.textContent = 'Correct! Moving to the next assessment.';
-                        resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                         if(resultEl) {
+                            resultEl.textContent = 'Correct! Moving to the next assessment.';
+                            resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                        }
                         setTimeout(() => {
-                            resultEl.textContent = '';
+                            if(resultEl) resultEl.textContent = '';
                             renderCurrentAssessment();
                         }, 1500);
                     }
                 } else {
-                    resultEl.innerHTML = `Incorrect. The AI grader provided this feedback: <br/><em class="text-gray-300">"${aiResult.reason}"</em>. Please re-evaluate and try again.`;
-                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                    if(resultEl){
+                        resultEl.innerHTML = `Incorrect. The AI grader provided this feedback: <br/><em class="text-gray-300">"${aiResult.reason}"</em>. Please re-evaluate and try again.`;
+                        resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                    }
                 }
             } catch (error) {
                 console.error('AI Grading Error:', error);
-                resultEl.textContent = 'An error occurred during grading. Please try again later.';
-                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                if(resultEl) {
+                    resultEl.textContent = 'An error occurred during grading. Please try again later.';
+                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                }
             } finally {
-                submitButton.disabled = false;
-                submitBtnText.textContent = 'Submit Assessment';
-                submitSpinner.classList.add('hidden');
+                if(submitButton) submitButton.disabled = false;
+                if(submitBtnText) submitBtnText.textContent = 'Submit Assessment';
+                if(submitSpinner) submitSpinner.classList.add('hidden');
             }
         }
 
 
         function showProjects() {
-            document.getElementById('evaluation-container').classList.add('hidden');
+            const evalContainer = document.getElementById('evaluation-container');
             const projectsListContainer = document.getElementById('projects-list-container');
-            projectsListContainer.classList.remove('hidden');
+            if(evalContainer) evalContainer.classList.add('hidden');
+            if(projectsListContainer) projectsListContainer.classList.remove('hidden');
 
             const allProjects = [ 
                 { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, 
@@ -723,17 +786,19 @@
             ];
             
             const listElement = document.getElementById('projects-list');
-            listElement.innerHTML = ''; // Clear previous list
-            allProjects.forEach(project => {
-                const li = document.createElement('li');
-                li.className = "col-span-1 flex flex-col rounded-lg bg-gray-700/50 text-center shadow transition-all duration-300 hover:scale-105 hover:border-teal-500 border border-transparent";
-                li.innerHTML = `
-                    <div class="flex flex-1 flex-col p-8 justify-center">
-                        <h3 class="text-base font-medium text-white">${project.name}</h3>
-                    </div>
-                `;
-                listElement.appendChild(li);
-            });
+            if(listElement) {
+                listElement.innerHTML = ''; // Clear previous list
+                allProjects.forEach(project => {
+                    const li = document.createElement('li');
+                    li.className = "col-span-1 flex flex-col rounded-lg bg-gray-700/50 text-center shadow transition-all duration-300 hover:scale-105 hover:border-teal-500 border border-transparent";
+                    li.innerHTML = `
+                        <div class="flex flex-1 flex-col p-8 justify-center">
+                            <h3 class="text-base font-medium text-white">${project.name}</h3>
+                        </div>
+                    `;
+                    listElement.appendChild(li);
+                });
+            }
         }
 
         async function gradeWithAI(assessment, userRating, userJustification) {
@@ -829,6 +894,7 @@
 
         // --- App Initialization ---
         if(app) {
+            setupAuthListeners();
             initAuth();
         }
 
