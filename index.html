@@ -1,674 +1,752 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outlier Help Center</title>
-
+    <title>Outlier Help</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        html { scroll-behavior: smooth; }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #F9FAFB;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        #grid-pattern { background-image: linear-gradient(to right, #E5E7EB 1px, transparent 1px), linear-gradient(to bottom, #E5E7EB 1px, transparent 1px); background-size: 2rem 2rem; opacity: 0.5; }
-        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
-        .modal-backdrop { animation: fade-in 0.3s ease-out forwards; }
-        .modal-content { animation: scale-in 0.3s ease-out forwards; }
-
-        .flip-card-container {
-            perspective: 1000px;
+        .hidden {
+            display: none;
         }
-        .flip-card {
-            transition: transform 0.8s;
-            transform-style: preserve-3d;
-            position: relative;
-            height: 100%;
+        .spinner {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
         }
-        .flip-card-front, .flip-card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            border: 1px solid #E5E7EB;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            background-color: white;
-            transition: box-shadow 0.3s, transform 0.3s, -webkit-transform 0.3s;
-        }
-        .flip-card-back {
-            transform: rotateY(180deg);
-            background-color: #F9FAFB;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 2px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 2px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
-        .project-card-wrapper {
-             min-height: 250px;
-        }
-        @media (hover: hover) and (pointer: fine) {
-            .flip-card-container:hover .flip-card {
-                transform: rotateY(180deg);
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
-        }
-        .is-flipped .flip-card {
-            transform: rotateY(180deg);
         }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="h-full text-white bg-gray-900">
+    <!-- Full screen background container for the login page -->
+    <div id="auth-background-container" class="fixed inset-0 z-0 transition-opacity duration-1000 opacity-0">
+        <div class="absolute inset-0 bg-black/60"></div> <!-- Dark overlay -->
+        <img id="auth-bg-image" src="" alt="Dynamic background" class="w-full h-full object-cover">
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <div id="app" class="relative z-10 flex items-center justify-center min-h-full p-4 sm:p-6 lg:p-8">
 
-        // --- SVG Icon Components ---
-        const HomeIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
-        const ProjectIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>;
-        const ServicesIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>;
-        const ReviewsIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
-        const ContactIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>;
-        const CloseIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
-        const MenuIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>;
-        const ArrowRightIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
-        const SearchIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-        const StarIcon = ({ className, isFilled }) => <svg className={className} viewBox="0 0 24 24" fill={isFilled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>;
-        const ArrowUpRightIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>;
-        const UserIcon = ({ className }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="spinner h-16 w-16 border-4 border-gray-600 rounded-full"></div>
+        </div>
 
-        const Home = ({ setActivePage }) => (
-            <Section id="home" setActivePage={setActivePage}>
-                <div className="container mx-auto min-h-[calc(100vh-5rem)] grid md:grid-cols-2 items-center gap-12 px-8">
-                    <div className="text-center md:text-left">
-                        <div className="text-center md:text-left">
-                            <div className="inline-flex items-center text-sm font-medium border border-gray-300 rounded-full px-4 py-1 mb-6 text-gray-600">
-                                Powered by Scale AI
-                                <ArrowUpRightIcon className="w-4 h-4 ml-1" />
+        <!-- Auth Section -->
+        <div id="auth-section" class="hidden w-full max-w-md space-y-8">
+            <div class="relative z-10 text-center">
+                <h2 class="text-4xl font-bold tracking-tight text-white">Welcome to Outlier Help</h2>
+                <p class="mt-2 text-sm text-gray-300">
+                    Sign in to access your dashboard
+                </p>
+            </div>
+            <div class="bg-black/20 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl space-y-6 relative z-10">
+                <!-- Auth Forms: Login / Signup Toggle -->
+                <div id="login-form">
+                     <input id="login-email" type="email" autocomplete="email" required class="block w-full rounded-md border-0 bg-white/10 p-3 text-white placeholder:text-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Email address">
+                     <div class="relative mt-4">
+                        <input id="login-password" type="password" autocomplete="current-password" required class="block w-full rounded-md border-0 bg-white/10 p-3 pr-10 text-white placeholder:text-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Password">
+                        <button type="button" id="login-password-toggle" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white">
+                           <svg id="login-eye-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l4.43-7.086a1.012 1.012 0 011.633 0l4.43 7.086a1.012 1.012 0 010 .639l-4.43 7.086a1.012 1.012 0 01-1.633 0l-4.43-7.086z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                           </svg>
+                           <svg id="login-eye-slash-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L6.228 6.228" />
+                           </svg>
+                        </button>
+                     </div>
+                      <div class="text-right text-sm mt-2">
+                        <a href="#" id="forgot-password-link" class="font-medium text-indigo-400 hover:text-indigo-300">Forgot password?</a>
+                    </div>
+                     <button id="login-button" class="mt-4 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-300 transform hover:scale-105">Sign in</button>
+                </div>
+                 <div id="signup-form" class="hidden">
+                     <input id="signup-email" type="email" autocomplete="email" required class="block w-full rounded-md border-0 bg-white/10 p-3 text-white placeholder:text-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Email address">
+                     <div class="relative mt-4">
+                        <input id="signup-password" type="password" autocomplete="new-password" required class="block w-full rounded-md border-0 bg-white/10 p-3 pr-10 text-white placeholder:text-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Password">
+                         <button type="button" id="signup-password-toggle" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white">
+                           <svg id="signup-eye-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l4.43-7.086a1.012 1.012 0 011.633 0l4.43 7.086a1.012 1.012 0 010 .639l-4.43 7.086a1.012 1.012 0 01-1.633 0l-4.43-7.086z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                           </svg>
+                           <svg id="signup-eye-slash-icon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L6.228 6.228" />
+                           </svg>
+                        </button>
+                     </div>
+                     <button id="signup-button" class="mt-6 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-300 transform hover:scale-105">Create Account</button>
+                </div>
+
+                 <div id="forgot-password-form" class="hidden">
+                    <p class="text-center text-gray-300 mb-4">Enter your email to receive a password reset link.</p>
+                     <input id="reset-email" type="email" autocomplete="email" required class="block w-full rounded-md border-0 bg-white/10 p-3 text-white placeholder:text-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Email address">
+                     <button id="send-reset-button" class="mt-6 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-300 transform hover:scale-105">Send Reset Link</button>
+                    <div class="text-center text-sm mt-4">
+                        <a href="#" id="back-to-login-link" class="font-medium text-indigo-400 hover:text-indigo-300">Back to Sign In</a>
+                    </div>
+                </div>
+
+                <div class="text-center text-sm">
+                    <a href="#" id="toggle-auth" class="font-medium text-indigo-400 hover:text-indigo-300">Don't have an account? Sign up</a>
+                </div>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="bg-gray-800 px-2 text-gray-400" style="background-color: transparent;">Or continue with</span>
+                    </div>
+                </div>
+
+                <div>
+                    <button id="google-signin-button" class="flex w-full items-center justify-center gap-3 rounded-md bg-white/90 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-white focus-visible:ring-transparent transition-all duration-300 transform hover:scale-105">
+                        <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            <path d="M1 1h22v22H1z" fill="none"/>
+                        </svg>
+                        <span>Continue with Google</span>
+                    </button>
+                </div>
+            </div>
+             <p id="auth-error" class="mt-2 text-center text-sm text-red-400"></p>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="hidden w-full h-full">
+            <div class="flex flex-col h-full max-w-7xl mx-auto">
+                <!-- Header -->
+                <header class="bg-gray-800 shadow-md rounded-b-lg">
+                    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div class="flex h-16 items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                   <span class="text-xl font-bold text-white">Outlier Help</span>
+                                </div>
+                                <div class="hidden md:block">
+                                    <div class="ml-10 flex items-baseline space-x-4">
+                                        <a href="#about" class="nav-link bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium">About Us</a>
+                                        <a href="#menu" class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Menu</a>
+                                        <a href="#projects" class="nav-link text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Projects</a>
+                                    </div>
+                                </div>
                             </div>
-                            <h2 className="text-4xl lg:text-5xl font-bold text-gray-800 tracking-tight">
-                                Use your <span className="bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">brilliance</span> to train AI (and get paid for it)
-                            </h2>
-                            <p className="mt-4 text-lg text-gray-600">
-                                Join 100k+ experts improving the accuracy of AI. Work from home, on your own schedule.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex justify-center h-full">
-                        <img 
-                            src="https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
-                            alt="Humanoid robot interacting with glowing neural network" 
-                            className="rounded-2xl shadow-2xl w-full h-full object-cover max-w-md"
-                        />
-                    </div>
-                </div>
-            </Section>
-        );
-
-        // --- NEW: Login Modal Component ---
-        const LoginModal = ({ isOpen, onClose, onLogin }) => {
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-
-            const handleLogin = (e) => {
-                e.preventDefault();
-                // Basic mock login validation
-                if (email && password) {
-                    onLogin();
-                    onClose();
-                } else {
-                    alert('Please enter both email and password.');
-                }
-            };
-
-            if (!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><CloseIcon className="w-6 h-6" /></button>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Login to Access</h2>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <div>
-                                <input
-                                    type="email"
-                                    placeholder="Email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="w-full py-3 px-4 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 transition-colors">
-                                Login
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const ProjectStatusModal = ({ project, onClose }) => {
-            if (!project) return null;
-            const getStatusInfo = (status) => {
-                const nonActiveMessage = "Keep refreshing your Outlier dashboard. You can also onboard suggested project on Marketplace.";
-                switch (status) {
-                    case "Active": return { color: "text-green-500", message: "This project is active and has available tasks." };
-                    case "Max Capacity": return { color: "text-red-500", message: nonActiveMessage };
-                    case "Temporary Paused": return { color: "text-orange-500", message: nonActiveMessage };
-                    case "Paused": return { color: "text-gray-500", message: nonActiveMessage };
-                    default: return { color: "text-yellow-500", message: "Status is currently being updated." };
-                }
-            };
-            const statusInfo = getStatusInfo(project.status);
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 modal-backdrop" onClick={onClose}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><CloseIcon className="w-6 h-6" /></button>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{project.name}</h2>
-                        <p className={`text-lg font-semibold ${statusInfo.color} mb-4`}>Status: {project.status}</p>
-                        <p className="text-gray-600 mb-6">{statusInfo.message}</p>
-                        <div className="text-sm text-gray-500">Available Tasks: <span className="font-bold text-gray-700">{project.tasks.toLocaleString()}</span></div>
-                    </div>
-                </div>
-            );
-        };
-
-        const getStatusBadgeColor = (status) => {
-            switch (status) {
-                case "Active": return "bg-green-100 text-green-800";
-                case "Max Capacity": return "bg-red-100 text-red-800";
-                case "Temporary Paused": return "bg-orange-100 text-orange-800";
-                case "Paused": return "bg-gray-100 text-gray-800";
-                default: return "bg-yellow-100 text-yellow-800";
-            }
-        };
-        
-        const getProgressBarColor = (status) => {
-            switch (status) {
-                case "Active": return "bg-green-500";
-                case "Max Capacity": return "bg-red-500";
-                case "Temporary Paused": return "bg-orange-500";
-                case "Paused": return "bg-gray-500";
-                default: return "bg-yellow-500";
-            }
-        };
-
-        const ActiveProjects = ({ setActivePage, onApplyNow, projects, handleRequestLink }) => {
-            const SOFT_MAX_TASKS = 3500;
-            const allowedCountries = ["United States", "UK", "Canada", "India", "Mexico", "Bolivia", "Italy", "Colombia", "Brazil", "Germany", "France", "Spain", "Japan", "South Korea", "Singapore"];
-            const [flippedCard, setFlippedCard] = useState(null);
-            const flipTimeoutRef = useRef(null);
-
-            const handleCardClick = (projectName) => {
-                if (window.innerWidth <= 768) {
-                    if (flippedCard === projectName) {
-                        setFlippedCard(null);
-                    } else {
-                        setFlippedCard(projectName);
-                    }
-                    if (flipTimeoutRef.current) {
-                        clearTimeout(flipTimeoutRef.current);
-                    }
-                    flipTimeoutRef.current = setTimeout(() => {
-                        setFlippedCard(null);
-                    }, 5000); // Flip back after 5 seconds on mobile
-                }
-            };
-            
-            return (
-                <Section id="active-projects" setActivePage={setActivePage}>
-                    <div className="py-20 px-8">
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center animate-fade-in-up">Our Active Projects</h2>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {projects.length > 0 ? projects.map((project) => (
-                                <div 
-                                    key={project.name} 
-                                    className={`project-card-wrapper flip-card-container ${flippedCard === project.name ? 'is-flipped' : ''}`}
-                                    onClick={() => handleCardClick(project.name)}
-                                >
-                                    <div className="flip-card">
-                                        
-                                        {/* --- FRONT SIDE of the card --- */}
-                                        <div className="flip-card-front flex-grow group shadow-sm hover:shadow-xl transition-all duration-300">
-                                            <div className="flex-grow">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
-                                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${getStatusBadgeColor(project.status)}`}>{project.status}</span>
-                                                </div>
-                                                <div className="my-6">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-sm font-medium text-gray-600">Available Tasks on Pool</span>
-                                                        <span className="text-sm font-semibold text-gray-800">{project.tasks.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                                        <div className={`h-2.5 rounded-full ${getProgressBarColor(project.status)} transition-all duration-500 ease-linear`} style={{ width: `${(project.tasks / SOFT_MAX_TASKS) * 100}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="mt-auto">
-                                                <button onClick={(e) => { e.stopPropagation(); onApplyNow(); }} className="w-full text-center text-black font-semibold py-2 rounded-lg bg-gray-100 hover:bg-gray-900 hover:text-white transition-all duration-300 flex items-center justify-center group">
-                                                    Apply Now <ArrowRightIcon className="w-4 h-4 ml-2 transform transition-transform duration-300 group-hover:translate-x-1" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* --- BACK SIDE of the card (appears on hover/click) --- */}
-                                        <div className="flip-card-back flex-grow group shadow-sm hover:shadow-xl transition-all duration-300">
-                                            <div className="w-full h-full flex flex-col justify-between">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Allowed Countries</h3>
-                                                    <ul className="text-sm text-gray-600 text-left mb-6 space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
-                                                        {allowedCountries.map((country, index) => (
-                                                            <li key={index} className="px-2 py-1 bg-gray-100 rounded-md">
-                                                                {country}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                                <div>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleRequestLink(project.name); }} className="w-full text-center text-white font-semibold py-3 rounded-lg bg-black hover:bg-gray-800 transition-colors">
-                                                        Request Link
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            )) : <p className="text-gray-500 text-center col-span-full">No projects found. Try a different search term.</p>}
-                        </div>
-                    </div>
-                </Section>
-            );
-        };
-        
-        const Services = ({ setActivePage, projects, handleHire }) => {
-            const [servicePrices, setServicePrices] = useState({});
-            const [selectedCountry, setSelectedCountry] = useState('US');
-            const countries = [ { name: 'United States', code: 'US' }, { name: 'United Kingdom', code: 'GB' }, { name: 'Canada', code: 'CA' }, { name: 'Australia', code: 'AU' }, { name: '--- Europe ---', code: 'EU_DIVIDER', disabled: true }, { name: 'Germany', code: 'DE' }, { name: 'France', code: 'FR' }, { name: 'Spain', code: 'ES' }, { name: 'Italy', code: 'IT' }, { name: 'Netherlands', code: 'NL' }, { name: '--- Asia ---', code: 'AS_DIVIDER', disabled: true }, { name: 'Japan', code: 'JP' }, { name: 'South Korea', code: 'KR' }, { name: 'India', code: 'IN' }, { name: 'Singapore', code: 'SG' }, { name: '--- Americas ---', code: 'AM_DIVIDER', disabled: true }, { name: 'Mexico', code: 'MX' }, { name: 'Brazil', code: 'BR' }, { name: 'Other', code: 'OTHER' } ];
-            const basePrices = { "Space Camelid": 3.50, "Metro Silo": 4.00, "Valkyrie": 5.00, "Stratus Drake": 4.50, "Rhind Evals": 6.00, "Blueberry Bagels": 3.00, "Cloud Evals": 7.50, "S Knees Man": 8.00, "Mascara Mambo": 5.50, "Glue Sail": 6.50, "Bettascope Rubrics": 7.00, "Multilingual Static Comparison v2": 9.00, "Skilled Shipwright Code": 9.50, "Skilled Shipwright Reasoning": 9.50, "Summer Robin": 4.00, "Big Mallet": 5.00 };
-
-            useEffect(() => {
-                const newPrices = {};
-                const isTierOneCountry = ['US', 'GB', 'CA', 'AU'].includes(selectedCountry);
-                projects.forEach(p => {
-                    let price = basePrices[p.name] || 4.00;
-                    if (isTierOneCountry) { price = Math.min(Math.max(price * 1.5, 5.50), 10.00); }
-                    newPrices[p.name] = price.toFixed(2);
-                });
-                setServicePrices(newPrices);
-            }, [selectedCountry, projects]);
-
-            return (
-                <Section id="services" setActivePage={setActivePage}>
-                    <div className="py-20 px-8">
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4 text-center">Assessment Passing Services</h2>
-                        <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-8">Select your location to see pricing. We provide expert guidance to help you pass project assessments.</p>
-                        <div className="flex justify-center mb-12">
-                            <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-black">
-                                {countries.map(c => <option key={c.code} value={c.code} disabled={c.disabled} className={c.disabled ? 'bg-gray-200 font-bold' : ''}>{c.name}</option>)}
-                            </select>
-                        </div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {projects.length > 0 ? projects.map((project) => (
-                                <div key={project.name} className="bg-white border border-gray-200/80 rounded-xl p-6 flex flex-col group shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                                    <div className="flex-grow">
-                                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.name}</h3>
-                                        <p className="text-gray-500 text-sm mb-4">Hire an Expert to help you pass your Assessment.</p>
-                                        <div className="text-3xl font-bold text-black">${servicePrices[project.name] || '...'}</div>
-                                    </div>
-                                    <div className="mt-6"><button onClick={() => handleHire(project.name)} className="w-full text-center text-white font-semibold py-2 rounded-lg bg-black hover:bg-gray-800 transition-colors">Hire</button></div>
-                                </div>
-                            )) : <p className="text-gray-500 text-center col-span-full">No services found for this project.</p>}
-                        </div>
-                    </div>
-                </Section>
-            );
-        };
-        
-        const Reviews = ({ setActivePage }) => {
-            const testimonials = [
-                { name: "Google", rating: 5, text: "Outlier's data was pivotal in fine-tuning our Gemini Pro model. The nuanced, high-quality datasets allowed us to increase our multi-modal reasoning accuracy by over 15%.", logo: <svg className="h-10 w-10" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg> },
-                { name: "Microsoft", rating: 5, text: "Scaling the training for our Turing NLG models on Azure AI was a monumental task. Outlier's platform provided the diverse, high-quality data we needed, resulting in a 20% reduction in model hallucination.", logo: <svg className="h-10 w-10" viewBox="0 0 21 21" fill="currentColor"><path fill="#f25022" d="M1 1h9v9H1z"></path><path fill="#00a4ef" d="M1 11h9v9H1z"></path><path fill="#7fba00" d="M11 1h9v9h-9z"></path><path fill="#ffb900" d="M11 11h9v9h-9z"></path></svg> },
-                { name: "Facebook", rating: 4, text: "Training our models required a dataset of unprecedented scale. Outlier's expert annotators were crucial for our reinforcement learning with human feedback (RLHF) phase, improving safety alignment.", logo: <svg className="h-10 w-10" fill="#1877F2" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-0.732 0-1.325 0.593-1.325 1.325v21.351c0 0.731 0.593 1.324 1.325 1.324h11.494v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463 0.099 2.795 0.143v3.24l-1.918 0.001c-1.504 0-1.795 0.715-1.795 1.763v2.313h3.587l-0.467 3.622h-3.12v9.293h6.116c0.73 0 1.323-0.593 1.323-1.325v-21.35c0-0.732-0.593-1.325-1.325-1.325z"></path></svg> }
-            ];
-            return (
-                <Section id="reviews" setActivePage={setActivePage}>
-                    <div className="py-20 px-8">
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center">What our Big Client Companies Say</h2>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            {testimonials.map((review, index) => (
-                                <div key={index} className="bg-white border border-gray-200/80 rounded-xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                                    <div className="h-20 flex items-center justify-center mb-4">{review.logo}</div>
-                                    <h3 className="font-bold text-gray-900 text-xl mb-2">{review.name}</h3>
-                                    <div className="flex justify-center mb-4 text-yellow-500">{[...Array(5)].map((_, i) => <StarIcon key={i} className="w-5 h-5" isFilled={i < review.rating} />)}</div>
-                                    <p className="text-gray-600 mb-6 flex-grow">"{review.text}"</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </Section>
-            );
-        };
-        
-        const Section = ({ id, children, setActivePage, className = '' }) => { const ref = useRef(null); useEffect(() => { const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActivePage(id); }, { threshold: 0.5 }); if (ref.current) observer.observe(ref.current); return () => { if (ref.current) observer.unobserve(ref.current); }; }, [id, setActivePage]); return <section id={id} ref={ref} className={className}>{children}</section>; };
-        
-        const ContactUs = ({ setActivePage, contactMessage, setContactMessage, showSuccessMessage }) => { 
-            const nameRef = useRef(null);
-            const emailRef = useRef(null);
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                showSuccessMessage();
-                nameRef.current.value = '';
-                emailRef.current.value = '';
-                setContactMessage('');
-            };
-
-            return (
-                <Section id="contact-us" setActivePage={setActivePage}>
-                    <div className="py-20 px-8"> 
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-12 text-center">Get In Touch</h2> 
-                        <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto bg-white border border-gray-200/80 rounded-xl p-8 shadow-lg"> 
-                            <div> 
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label> 
-                                <input ref={nameRef} type="text" id="name" className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="Your Name" required /> 
-                            </div> 
-                            <div> 
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label> 
-                                <input ref={emailRef} type="email" id="email" className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="you@example.com" required /> 
-                            </div> 
-                            <div> 
-                                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label> 
-                                <textarea id="message" rows="4" value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-black" placeholder="How can we help?"></textarea> 
-                            </div> 
-                            <div> 
-                                <button type="submit" className="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 transition-colors">Send Message</button> 
-                            </div> 
-                        </form> 
-                    </div> 
-                </Section>
-            );
-        };
-        
-        const SuccessMessage = ({ show, onClose }) => {
-            if (!show) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl p-6 text-center w-full max-w-sm border border-green-200 animate-scale-in">
-                        <div className="flex justify-center mb-4">
-                            <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Message Received!</h3>
-                        <p className="text-gray-600 text-sm">We have received your message. Hang tight! The review can take 2-3 business days.</p>
-                        <button onClick={onClose} className="mt-4 text-sm font-medium text-green-600 hover:text-green-800 transition-colors">Close</button>
-                    </div>
-                </div>
-            );
-        };
-
-        function App() {
-            const [activePage, setActivePage] = useState('home');
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-            const [contactMessage, setContactMessage] = useState("");
-            const [isScrolled, setIsScrolled] = useState(false);
-            const [searchTerm, setSearchTerm] = useState("");
-            const [suggestions, setSuggestions] = useState([]);
-            const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
-            const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
-            const [showSuccess, setShowSuccess] = useState(false);
-            const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const searchContainerRef = useRef(null);
-
-            const allProjects = [ { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, { name: "Rhind Evals" }, { name: "Blueberry Bagels" }, { name: "Cloud Evals" }, { name: "S Knees Man" }, { name: "Mascara Mambo" }, { name: "Glue Sail" }, { name: "Bettascope Rubrics" }, { name: "Multilingual Static Comparison v2" }, { name: "Skilled Shipwright Code" }, { name: "Skilled Shipwright Reasoning" }, { name: "Summer Robin" }, { name: "Big Mallet" } ];
-            const statuses = ["Active", "Max Capacity", "Temporary Paused", "Paused"];
-            
-            const [projects, setProjects] = useState(() => allProjects.map(p => ({ 
-                ...p, 
-                tasks: Math.floor(Math.random() * 3500), 
-                status: statuses[Math.floor(Math.random() * statuses.length)],
-                lastPausedAt: null
-            })));
-            
-            useEffect(() => {
-                const handleContextmenu = e => e.preventDefault();
-                document.addEventListener('contextmenu', handleContextmenu);
-                const handleKeydown = e => {
-                    if (
-                        e.key === 'F12' ||
-                        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-                        (e.ctrlKey && e.key === 'U')
-                    ) {
-                        e.preventDefault();
-                    }
-                };
-                document.addEventListener('keydown', handleKeydown);
-
-                return () => {
-                    document.removeEventListener('contextmenu', handleContextmenu);
-                    document.removeEventListener('keydown', handleKeydown);
-                };
-            }, []);
-
-            useEffect(() => {
-                const taskInterval = setInterval(() => {
-                    setProjects(currentProjects =>
-                        currentProjects.map(p => {
-                            if (p.status === 'Active') {
-                                const newTasks = Math.min(3500, Math.max(0, p.tasks + (Math.floor(Math.random() * 250) - 125)));
-                                return { ...p, tasks: newTasks };
-                            }
-                            return p;
-                        })
-                    );
-                }, 2500);
-
-                const statusInterval = setInterval(() => {
-                    setProjects(currentProjects =>
-                        currentProjects.map(p => {
-                            let newStatus = statuses[Math.floor(Math.random() * statuses.length)];
-                            let newLastPausedAt = p.lastPausedAt;
-
-                            const isPaused = p.status === 'Paused';
-                            const currentTime = new Date().getTime();
-                            const twentyMinutes = 20 * 60 * 1000;
-
-                            if (isPaused && p.lastPausedAt && (currentTime - p.lastPausedAt) < twentyMinutes) {
-                                newStatus = 'Paused';
-                            } else if (newStatus === 'Paused' && !isPaused) {
-                                newLastPausedAt = currentTime;
-                            } else if (newStatus !== 'Paused') {
-                                newLastPausedAt = null;
-                            }
-
-                            return { ...p, status: newStatus, lastPausedAt: newLastPausedAt };
-                        })
-                    );
-                }, 30000);
-
-                return () => { clearInterval(taskInterval); clearInterval(statusInterval); };
-            }, []);
-
-            useEffect(() => {
-                if (isSuggestionsVisible) {
-                    const filtered = allProjects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-                    setSuggestions(filtered);
-                } else {
-                    setSuggestions([]);
-                }
-            }, [searchTerm, isSuggestionsVisible]);
-
-            useEffect(() => { function handleClickOutside(event) { if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) { setIsSuggestionsVisible(false); } } document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [searchContainerRef]);
-            useEffect(() => { const handleScroll = () => setIsScrolled(window.scrollY > 10); window.addEventListener('scroll', handleScroll); return () => window.removeEventListener('scroll', handleScroll); }, []);
-            
-            const handleApplyNow = () => window.open("https://app.outlier.ai/en/expert/opportunities", "_blank");
-            const handleHire = (projectName) => { setContactMessage(`Hello, I'm interested in hiring an expert for the "${projectName}" assessment.`); document.getElementById('contact-us')?.scrollIntoView({ behavior: 'smooth' }); };
-            const handleSelectProject = (projectName) => { const projectData = projects.find(p => p.name.toLowerCase() === projectName.toLowerCase()); if(projectData) { setSearchTerm(projectName); setSelectedProjectForModal(projectData); setIsSuggestionsVisible(false); } };
-            const handleSearchSubmit = (e) => { e.preventDefault(); if (suggestions.length === 1) { handleSelectProject(suggestions[0].name); } };
-
-            const handleRequestLink = (projectName) => {
-                const message = `Hello, I'm interested in the direct link for the "${projectName}" project. Please send me the details.`;
-                setContactMessage(message);
-                document.getElementById('contact-us')?.scrollIntoView({ behavior: 'smooth' });
-            };
-            
-            const closeModalAndReset = () => {
-                setSelectedProjectForModal(null);
-                setSearchTerm("");
-            };
-
-            const showSuccessMessage = () => {
-                setShowSuccess(true);
-                setTimeout(() => {
-                    setShowSuccess(false);
-                }, 5000); // Disappear after 5 seconds
-            };
-
-            const handleLogin = () => {
-                setIsLoggedIn(true);
-            };
-
-            const handleLogout = () => {
-                setIsLoggedIn(false);
-            };
-
-            const navItems = [ 
-                { page: 'Home', id: 'home', icon: HomeIcon }, 
-                { page: 'Projects', id: 'active-projects', icon: ProjectIcon }, 
-                { page: 'Services', id: 'services', icon: ServicesIcon }, 
-                { page: 'Reviews', id: 'reviews', icon: ReviewsIcon }, 
-                { page: 'Contact', id: 'contact-us', icon: ContactIcon } 
-            ];
-            const filteredLiveProjects = searchTerm ? projects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())) : projects;
-            const filteredServiceProjects = searchTerm ? allProjects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())) : allProjects;
-
-            return (
-                <div className="min-h-screen bg-gray-50 text-gray-800 overflow-x-hidden">
-                    <ProjectStatusModal project={selectedProjectForModal} onClose={closeModalAndReset} />
-                    <SuccessMessage show={showSuccess} onClose={() => setShowSuccess(false)} />
-                    <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={handleLogin} />
-
-                    <div id="grid-pattern" className="fixed top-0 left-0 w-full h-full z-[-1]"></div>
-                    <header className={`sticky top-0 bg-white/70 backdrop-blur-xl z-30 transition-shadow duration-300 ${isScrolled ? 'shadow-md border-b border-gray-200/80' : ''}`}>
-                        <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex items-center justify-between h-20">
-                                <span className="text-gray-800 text-2xl font-bold">Outlier</span>
-                                <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-end">
-                                    <div className="max-w-lg w-full lg:max-w-xs" ref={searchContainerRef}>
-                                        <form onSubmit={handleSearchSubmit}>
-                                            <div className="relative">
-                                                <div className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center"><SearchIcon className="h-5 w-5 text-gray-400" /></div>
-                                                <input className="block w-full bg-white/50 py-2 pl-10 pr-3 border border-gray-300 rounded-md leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black sm:text-sm" placeholder="Search projects..." type="search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onFocus={() => setIsSuggestionsVisible(true)} autoComplete="off" />
-                                            </div>
-                                        </form>
-                                        {isSuggestionsVisible && suggestions.length > 0 && (
-                                            <div className="absolute mt-1 w-full lg:max-w-xs rounded-md bg-white shadow-lg z-20 border border-gray-200">
-                                                <ul className="max-h-60 overflow-auto rounded-md py-1 text-base">{suggestions.map((suggestion) => ( <li key={suggestion.name} onClick={() => handleSelectProject(suggestion.name)} className="text-gray-900 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100"><span className="font-normal block truncate">{suggestion.name}</span></li> ))}</ul>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="hidden md:block">
-                                    <div className="ml-4 flex items-center md:ml-6">
-                                        {isLoggedIn && navItems.map(item => (
-                                            <a href={`#${item.id}`} key={item.id} className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${activePage === item.id ? 'text-gray-900 bg-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}>
-                                                <item.icon className="w-5 h-5 mr-2" />{item.page}
-                                            </a>
-                                        ))}
-                                        {isLoggedIn ? (
-                                            <button onClick={handleLogout} className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 ml-4">
-                                                <UserIcon className="w-5 h-5 mr-2" />Logout
-                                            </button>
-                                        ) : (
-                                            <button onClick={() => setIsLoginModalOpen(true)} className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 ml-4">
-                                                <UserIcon className="w-5 h-5 mr-2" />Login
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex md:hidden">
-                                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="ml-4 p-2 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100">
-                                        <MenuIcon className="w-6 h-6" />
+                            <div class="hidden md:block">
+                                <div class="ml-4 flex items-center md:ml-6">
+                                    <span id="user-email" class="text-gray-400 text-sm mr-4"></span>
+                                    <button id="signout-button" class="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
-                        </nav>
-                        {isMenuOpen && (
-                            <div className="md:hidden">
-                                <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                                    {isLoggedIn && navItems.map(item => (
-                                        <a href={`#${item.id}`} key={item.id} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50" onClick={()=>setIsMenuOpen(false)}>
-                                            {item.page}
-                                        </a>
-                                    ))}
-                                    {isLoggedIn ? (
-                                        <button onClick={handleLogout} className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Logout</button>
-                                    ) : (
-                                        <button onClick={() => { setIsLoginModalOpen(true); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Login</button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </header>
-                    
-                    {isLoggedIn ? (
-                        <main className="relative z-10">
-                            <Home setActivePage={setActivePage} />
-                            <ActiveProjects setActivePage={setActivePage} onApplyNow={handleApplyNow} projects={filteredLiveProjects} handleRequestLink={handleRequestLink} />
-                            <Services setActivePage={setActivePage} projects={filteredServiceProjects} handleHire={handleHire} />
-                            <Reviews setActivePage={setActivePage} />
-                            <ContactUs setActivePage={setActivePage} contactMessage={contactMessage} setContactMessage={setContactMessage} showSuccessMessage={showSuccessMessage} />
-                        </main>
-                    ) : (
-                        <main className="relative z-10 min-h-screen flex items-center justify-center">
-                            <div className="text-center p-8">
-                                <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome to Outlier</h1>
-                                <p className="text-lg text-gray-600 mb-8">Please log in to view our projects and services.</p>
-                                <button onClick={() => setIsLoginModalOpen(true)} className="py-3 px-6 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 transition-colors">
-                                    Get Started
-                                </button>
-                            </div>
-                        </main>
-                    )}
-                    
-                    <footer className="bg-white/50 border-t border-gray-200/80 relative z-10"><div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500"><p>&copy; 2025 Outlier Help Center. All Rights Reserved.</p></div></footer>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="flex-grow py-8">
+                    <div id="page-content" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <!-- Content will be injected here -->
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Content Templates -->
+    <template id="about-template">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold tracking-tight text-white">About Outlier Help</h1>
+            <p class="mt-4 text-gray-300">Outlier Help is a platform dedicated to connecting skilled individuals with unique and challenging projects. We believe in fostering a community of problem-solvers and innovators.</p>
+            <p class="mt-2 text-gray-300">Our mission is to provide a space where talent can be tested, proven, and applied to meaningful work. By passing our evaluations, you demonstrate your readiness to tackle complex tasks and join an elite group of professionals.</p>
+        </div>
+    </template>
+
+    <template id="menu-template">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold tracking-tight text-white">Menu</h1>
+            <p class="mt-4 text-gray-300">Navigate through the platform using the links in the header. Here you can find information about us, explore the menu options, and access the project evaluation section.</p>
+        </div>
+    </template>
+
+    <template id="projects-template">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg">
+            <div id="evaluation-container">
+                <div id="assessment-content">
+                    <!-- Dynamic Assessment Content will be injected here -->
                 </div>
-            );
+                <div class="mt-6">
+                    <button id="submit-evaluation-button" class="flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                        <span id="submit-btn-text">Submit Assessment</span>
+                        <div id="submit-spinner" class="spinner h-5 w-5 border-2 ml-3 hidden"></div>
+                    </button>
+                </div>
+                <p id="evaluation-result" class="mt-4 text-center text-sm font-medium"></p>
+            </div>
+            <div id="projects-list-container" class="hidden">
+                 <h1 class="text-3xl font-bold tracking-tight text-white">Available Projects</h1>
+                 <p class="mt-2 text-gray-400">Congratulations on passing the evaluation. Here are the projects available to you.</p>
+                 <ul id="projects-list" class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Project items will be injected here -->
+                 </ul>
+            </div>
+        </div>
+    </template>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signInWithPopup,
+            GoogleAuthProvider,
+            signOut,
+            signInWithCustomToken,
+            signInAnonymously,
+            sendPasswordResetEmail
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        // Use the configuration provided by the environment for a secure connection.
+        const firebaseConfig = JSON.parse(
+            typeof __firebase_config !== 'undefined' 
+            ? __firebase_config 
+            : '{}'
+        );
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-outlier-help';
+
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- DOM Elements ---
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const authSection = document.getElementById('auth-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const authError = document.getElementById('auth-error');
+        const toggleAuthLink = document.getElementById('toggle-auth');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const forgotPasswordForm = document.getElementById('forgot-password-form');
+
+        // --- App State ---
+        let currentUser = null;
+        let isSignup = false;
+        let isBgImageGenerated = false;
+
+        // --- Setup Functions ---
+        function setupPasswordToggle(inputId, toggleButtonId, eyeIconId, eyeSlashIconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = document.getElementById(toggleButtonId);
+            const eyeIcon = document.getElementById(eyeIconId);
+            const eyeSlashIcon = document.getElementById(eyeSlashIconId);
+
+            toggleButton.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeIcon.classList.add('hidden');
+                    eyeSlashIcon.classList.remove('hidden');
+                } else {
+                    passwordInput.type = 'password';
+                    eyeIcon.classList.remove('hidden');
+                    eyeSlashIcon.classList.add('hidden');
+                }
+            });
         }
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+        // --- Authentication Logic ---
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Initial authentication failed:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            const authBg = document.getElementById('auth-background-container');
+            // Show dashboard only if user has an email (i.e., not an anonymous or initial token user)
+            if (user && user.email) {
+                currentUser = user;
+                authSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                authBg.classList.add('opacity-0'); // Hide background
+                document.getElementById('user-email').textContent = user.email;
+                await main(); // Initialize dashboard
+            } else {
+                currentUser = null;
+                authSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+                authBg.classList.remove('opacity-0'); // Show background
+                if (!isBgImageGenerated) {
+                    generateBackgroundImage();
+                    isBgImageGenerated = true;
+                }
+                // Setup password toggles when auth form is visible
+                setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
+                setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
+            }
+            loadingSpinner.classList.add('hidden');
+        });
+        
+        // Toggle between login and signup forms
+        toggleAuthLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignup = !isSignup;
+            loginForm.classList.toggle('hidden', isSignup);
+            signupForm.classList.toggle('hidden', !isSignup);
+            toggleAuthLink.textContent = isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up";
+            authError.textContent = '';
+        });
+
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            signupForm.classList.add('hidden');
+            forgotPasswordForm.classList.remove('hidden');
+            toggleAuthLink.classList.add('hidden'); // Hide the signup toggle
+            authError.textContent = '';
+        });
+
+        document.getElementById('back-to-login-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotPasswordForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            toggleAuthLink.classList.remove('hidden'); // Show the signup toggle
+            authError.textContent = '';
+        });
+
+        document.getElementById('login-button').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            authError.textContent = '';
+            try {
+                // This function securely communicates with the Firebase backend.
+                // It automatically handles the check to confirm if the user exists
+                // and if the provided password is correct.
+                // If the login is unsuccessful (user not found, wrong password),
+                // it throws an error which is caught by the 'catch' block below.
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                // Display the error message returned from Firebase.
+                authError.textContent = error.message;
+            }
+        });
+
+        document.getElementById('signup-button').addEventListener('click', async () => {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            authError.textContent = '';
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                authError.textContent = error.message;
+            }
+        });
+
+        document.getElementById('send-reset-button').addEventListener('click', async () => {
+            const email = document.getElementById('reset-email').value;
+            authError.textContent = '';
+            try {
+                await sendPasswordResetEmail(auth, email);
+                authError.textContent = 'Password reset email sent! Check your inbox.';
+                authError.classList.remove('text-red-400');
+                authError.classList.add('text-green-400');
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.add('text-red-400');
+                authError.classList.remove('text-green-400');
+            }
+        });
+
+        document.getElementById('google-signin-button').addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            authError.textContent = '';
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                authError.textContent = error.message;
+            }
+        });
+        
+        document.getElementById('signout-button').addEventListener('click', () => {
+            signOut(auth);
+        });
+        
+        
+        // --- Dashboard Logic ---
+        async function main() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pageContent = document.getElementById('page-content');
+            
+            function updateActiveLink(hash) {
+                navLinks.forEach(link => {
+                    if (link.hash === hash) {
+                        link.classList.add('bg-gray-900', 'text-white');
+                        link.classList.remove('text-gray-300', 'hover:bg-gray-700');
+                    } else {
+                        link.classList.remove('bg-gray-900', 'text-white');
+                        link.classList.add('text-gray-300', 'hover:bg-gray-700');
+                    }
+                });
+            }
+            
+            async function loadContent() {
+                const hash = window.location.hash || '#about';
+                updateActiveLink(hash);
+                let templateId;
+                switch(hash) {
+                    case '#menu':
+                        templateId = 'menu-template';
+                        break;
+                    case '#projects':
+                        templateId = 'projects-template';
+                        break;
+                    case '#about':
+                    default:
+                        templateId = 'about-template';
+                        break;
+                }
+                const template = document.getElementById(templateId);
+                pageContent.innerHTML = template.innerHTML;
+
+                if (hash === '#projects') {
+                    await setupProjectsPage();
+                }
+            }
+            
+            window.addEventListener('hashchange', loadContent);
+            await loadContent(); // Initial load
+        }
+        
+        // --- Projects Page Logic ---
+        const assessments = [
+            {
+                prompt: "Explain the concept of 'machine learning' to a 5-year-old.",
+                responseA: "It's when computers learn from looking at lots of pictures and numbers, like how you learn from looking at picture books, to get smarter at guessing things.",
+                responseB: "Machine learning is a subfield of artificial intelligence that utilizes algorithms to analyze data, learn from it, and then make a determination or prediction about something new.",
+                expertHint: "Response A is better. It uses a simple analogy (picture books) suitable for a 5-year-old, avoiding technical jargon. Response B is too complex and technical for the target audience."
+            },
+            {
+                prompt: "Write a short, exciting opening sentence for a story about a space pirate.",
+                responseA: "The notorious Captain Valerius boarded the starliner.",
+                responseB: "The alarms screamed through the corridors of the starship *Celestial Dream* the moment Captain Kaelen's magnetic boots slammed onto the bridge, his laughter echoing in the sudden silence.",
+                expertHint: "Response B is significantly better. It uses strong verbs ('screamed', 'slammed'), sensory details (alarms, laughter), and creates immediate action and character, which is more exciting."
+            },
+            {
+                prompt: "What are three key benefits of switching to renewable energy sources?",
+                responseA: "Switching to renewable energy helps the planet. It makes the air cleaner for us to breathe, doesn't run out like gas, and can create new jobs for people building windmills and solar panels.",
+                responseB: "The primary benefits are: 1) Environmental protection through reduced greenhouse gas emissions. 2) Energy security by diversifying away from finite fossil fuels. 3) Economic advantages via job creation in the green sector.",
+                expertHint: "Both are good, but Response A is slightly better for general audiences as it's more conversational and less jargon-heavy ('helps the planet', 'cleaner air'). Response B is more formal and academic. A good justification could argue for either, but must recognize the tonal difference."
+            },
+            {
+                prompt: "Provide a two-sentence horror story.",
+                responseA: "I woke up to hear knocking on the glass. At first, I thought it was the window until I heard it come from the mirror again.",
+                responseB: "The last thing I saw was my alarm clock flashing 12:07 before she pushed her long rotting nails through my chest, her other hand muffling my screams. I sat bolt upright, relieved it was only a dream, but as I saw my alarm clock read 12:06, I heard my closet door creak open.",
+                expertHint: "Both are classic horror tropes. Response B is arguably better as it builds more suspense and has a more complex narrative structure with the false relief moment. A good justification should point this out."
+            },
+            {
+                prompt: "Summarize the plot of 'Hamlet' in one sentence.",
+                responseA: "A young prince of Denmark, Hamlet, feigns madness to exact revenge on his uncle, who he believes murdered his father to seize the throne and marry his mother.",
+                responseB: "Hamlet is a tragedy by William Shakespeare about a prince who sees his father's ghost and then spends the rest of the play trying to decide if he should kill his uncle, which leads to everyone dying.",
+                expertHint: "Response A is better. It is a more formal and complete summary, capturing the core elements (revenge, feigned madness, usurpation) concisely. Response B is too colloquial and its ending ('leads to everyone dying') is an oversimplification, although not entirely inaccurate."
+            }
+        ];
+        let currentAssessmentIndex = 0;
+
+
+        async function setupProjectsPage() {
+            const evaluationContainer = document.getElementById('evaluation-container');
+            const projectsListContainer = document.getElementById('projects-list-container');
+            
+            // Check if user has already passed all assessments
+            const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
+            const docSnap = await getDoc(userProgressRef);
+
+            if (docSnap.exists() && docSnap.data().assessments_passed === true) {
+                showProjects();
+                return;
+            }
+
+            // If not passed, start the assessment process
+            evaluationContainer.classList.remove('hidden');
+            projectsListContainer.classList.add('hidden');
+            renderCurrentAssessment();
+
+            const submitButton = document.getElementById('submit-evaluation-button');
+            submitButton.addEventListener('click', handleAssessmentSubmission);
+        }
+        
+        function renderCurrentAssessment() {
+            const assessment = assessments[currentAssessmentIndex];
+            const contentEl = document.getElementById('assessment-content');
+            
+            contentEl.innerHTML = `
+                <h2 class="text-xl font-bold tracking-tight text-white">Assessment ${currentAssessmentIndex + 1} of ${assessments.length}</h2>
+                <p class="mt-2 text-gray-400">Read the prompt and the two AI responses. Rate which response is better and justify your answer.</p>
+                
+                <div class="mt-6 p-4 bg-gray-700 rounded-lg">
+                    <h3 class="font-semibold text-indigo-300">Prompt:</h3>
+                    <p class="mt-1 text-white">"${assessment.prompt}"</p>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-600">
+                        <h4 class="font-semibold text-gray-300">Response A</h4>
+                        <p class="mt-2 text-gray-300">${assessment.responseA}</p>
+                    </div>
+                    <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-600">
+                        <h4 class="font-semibold text-gray-300">Response B</h4>
+                        <p class="mt-2 text-gray-300">${assessment.responseB}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-semibold text-white">1. Which response is better? (1 = A is much better, 5 = B is much better)</h3>
+                    <fieldset class="mt-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-400">A</span>
+                            <div class="flex items-center space-x-2">
+                                ${[1,2,3,4,5].map(rating => `
+                                <label for="rating-${rating}" class="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-700 hover:bg-gray-600 cursor-pointer transition-colors">
+                                    <input type="radio" name="rating" id="rating-${rating}" value="${rating}" class="peer absolute opacity-0">
+                                    <span class="text-white peer-checked:text-indigo-300 peer-checked:font-bold">${rating}</span>
+                                </label>
+                                `).join('')}
+                            </div>
+                            <span class="text-sm text-gray-400">B</span>
+                        </div>
+                    </fieldset>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="font-semibold text-white">2. Justify your rating:</h3>
+                    <textarea id="assessment-justification" rows="4" class="mt-2 block w-full rounded-md border-0 bg-gray-900 p-3 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm" placeholder="Explain your reasoning here..."></textarea>
+                </div>
+            `;
+        }
+
+        async function handleAssessmentSubmission() {
+            const selectedRating = document.querySelector('input[name="rating"]:checked');
+            const justification = document.getElementById('assessment-justification').value.trim();
+            const resultEl = document.getElementById('evaluation-result');
+
+            if (!selectedRating) {
+                resultEl.textContent = 'Please select a rating from 1 to 5.';
+                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                return;
+            }
+            if (justification.length < 15) {
+                resultEl.textContent = 'Please provide a more detailed justification (at least 15 characters).';
+                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                return;
+            }
+
+            const submitButton = document.getElementById('submit-evaluation-button');
+            const submitBtnText = document.getElementById('submit-btn-text');
+            const submitSpinner = document.getElementById('submit-spinner');
+            
+            submitButton.disabled = true;
+            submitBtnText.textContent = 'Grading...';
+            submitSpinner.classList.remove('hidden');
+            resultEl.textContent = '';
+
+            try {
+                const aiResult = await gradeWithAI(assessments[currentAssessmentIndex], selectedRating.value, justification);
+
+                if (aiResult.passed) {
+                    currentAssessmentIndex++;
+                    if (currentAssessmentIndex >= assessments.length) {
+                        // Passed all assessments
+                        resultEl.textContent = 'Congratulations! You have passed all assessments.';
+                        resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                        const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
+                        await setDoc(userProgressRef, { assessments_passed: true });
+                        setTimeout(showProjects, 2000);
+                    } else {
+                        // Move to next assessment
+                        resultEl.textContent = 'Correct! Moving to the next assessment.';
+                        resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                        setTimeout(() => {
+                            resultEl.textContent = '';
+                            renderCurrentAssessment();
+                        }, 1500);
+                    }
+                } else {
+                    resultEl.innerHTML = `Incorrect. The AI grader provided this feedback: <br/><em>"${aiResult.reason}"</em>. Please re-evaluate and try again.`;
+                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                }
+            } catch (error) {
+                console.error('AI Grading Error:', error);
+                resultEl.textContent = 'An error occurred during grading. Please try again later.';
+                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+            } finally {
+                submitButton.disabled = false;
+                submitBtnText.textContent = 'Submit Assessment';
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+
+        function showProjects() {
+            document.getElementById('evaluation-container').classList.add('hidden');
+            const projectsListContainer = document.getElementById('projects-list-container');
+            projectsListContainer.classList.remove('hidden');
+
+            const allProjects = [ 
+                { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, 
+                { name: "Rhind Evals" }, { name: "Blueberry Bagels" }, { name: "Cloud Evals" }, { name: "S Knees Man" }, 
+                { name: "Mascara Mambo" }, { name: "Glue Sail" }, { name: "Bettascope Rubrics" }, 
+                { name: "Multilingual Static Comparison v2" }, { name: "Cloud Evals V3" }, { name: "Cypher Evals V3" }, 
+                { name: "Summer Robin" }, { name: "Big Mallet" } 
+            ];
+            
+            const listElement = document.getElementById('projects-list');
+            listElement.innerHTML = ''; // Clear previous list
+            allProjects.forEach(project => {
+                const li = document.createElement('li');
+                li.className = "col-span-1 flex flex-col divide-y divide-gray-600 rounded-lg bg-gray-700 text-center shadow transition hover:scale-105";
+                li.innerHTML = `
+                    <div class="flex flex-1 flex-col p-8 justify-center">
+                        <h3 class="text-sm font-medium text-white">${project.name}</h3>
+                    </div>
+                `;
+                listElement.appendChild(li);
+            });
+        }
+
+        async function gradeWithAI(assessment, userRating, userJustification) {
+             const apiKey = ""; // Canvas will provide this
+             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are an expert AI system that grades a junior evaluator's work.
+            You will be given an 'expertHint' that contains the correct reasoning.
+            You must evaluate if the junior evaluator's rating and justification align with the expertHint.
+            The user's rating is on a scale of 1-5, where 1 means Response A is much better, and 5 means Response B is much better. A 3 is neutral.
+
+            Your response MUST be in JSON format.
+            - If the user's logic is sound and aligns with the expert hint, return: {"passed": true, "reason": "The user's reasoning is sound."}
+            - If the user's logic is flawed, their rating is incorrect, or they miss the key points from the expert hint, return: {"passed": false, "reason": "A brief, helpful explanation for why they were wrong. For example: 'Your justification missed the key point that Response B was too technical for the audience.'"}
+            
+            Be strict but fair. The user doesn't have to match the hint word-for-word, but their core reasoning must be correct.
+            Do not add any other text outside the JSON object.
+            `;
+            
+            const userQuery = `
+                Expert Hint: "${assessment.expertHint}"
+                ---
+                User's Rating (1-5): ${userRating}
+                User's Justification: "${userJustification}"
+            `;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
+            };
+            
+            // Exponential backoff for retries
+            let response;
+            let attempts = 0;
+            const maxAttempts = 5;
+            while(attempts < maxAttempts) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) break;
+                } catch (error) {
+                    console.error(`Attempt ${attempts + 1} failed`, error);
+                }
+                attempts++;
+                await new Promise(res => setTimeout(res, Math.pow(2, attempts) * 1000));
+            }
+            
+            if (!response || !response.ok) {
+                 throw new Error('AI service is unavailable after multiple retries.');
+            }
+
+            const result = await response.json();
+            const jsonString = result.candidates[0].content.parts[0].text;
+            return JSON.parse(jsonString);
+        }
+
+        async function generateBackgroundImage() {
+            const bgImage = document.getElementById('auth-bg-image');
+            const bgContainer = document.getElementById('auth-background-container');
+            const apiKey = ""; // Canvas will provide this
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+            const prompt = "A modern, abstract background with flowing indigo and dark gray lines, minimalist digital art, cinematic lighting.";
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ['IMAGE']
+                },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                
+                if (base64Data) {
+                    bgImage.src = `data:image/png;base64,${base64Data}`;
+                } else {
+                    throw new Error('No image data found in response.');
+                }
+            } catch (error) {
+                console.error("Background image generation failed:", error);
+                // If generation fails, the background will remain the default dark gray.
+            }
+        }
+
+        // --- App Initialization ---
+        initAuth();
+
     </script>
 </body>
 </html>
+
+
+
