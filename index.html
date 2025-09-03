@@ -363,6 +363,20 @@
                         }
                     });
                 }
+                
+                function showLoginPage() {
+                    isDashboardInitialized = false;
+                    authSection.classList.remove('hidden');
+                    dashboardSection.classList.add('hidden');
+                    document.getElementById('auth-background-container').classList.remove('opacity-0');
+                    if (!isBgImageGenerated) {
+                        generateBackgroundImage();
+                        isBgImageGenerated = true;
+                    }
+                    setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
+                    setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
+                    loadingSpinner.classList.add('hidden');
+                }
 
                 // --- Authentication Logic ---
                 async function initAuth() {
@@ -373,8 +387,9 @@
                             await signInAnonymously(auth);
                         }
                     } catch (error) {
-                        console.error("Initial authentication failed:", error);
-                        setAuthError("Could not connect to services. Please refresh.");
+                        console.error("Initial authentication failed, showing login page.", error);
+                        showLoginPage();
+                        setAuthError("Could not connect to services. Please enable Anonymous Sign-In in your Firebase project.");
                     }
                 }
 
@@ -391,20 +406,11 @@
                             await main();
                             isDashboardInitialized = true;
                         }
+                         loadingSpinner.classList.add('hidden');
                     } else {
-                        currentUser = user; // It can be an anonymous user
-                        isDashboardInitialized = false;
-                        authSection.classList.remove('hidden');
-                        dashboardSection.classList.add('hidden');
-                        authBg.classList.remove('opacity-0');
-                        if (!isBgImageGenerated) {
-                            generateBackgroundImage();
-                            isBgImageGenerated = true;
-                        }
-                        setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
-                        setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
+                        currentUser = user; // can be anonymous or null
+                        showLoginPage();
                     }
-                    loadingSpinner.classList.add('hidden');
                 });
                 
                 // --- Auth Form UI Logic ---
@@ -430,17 +436,17 @@
                     });
                 }
 
-            if(document.getElementById('back-to-login-link')) {
-                    document.getElementById('back-to-login-link').addEventListener('click', (e) => {
-                        e.preventDefault();
-                        isSignup = false;
-                        showForm(loginForm);
-                        if (toggleAuthLink) {
-                            toggleAuthLink.classList.remove('hidden');
-                            toggleAuthLink.textContent = "Don't have an account? Sign up";
-                        }
-                    });
-            }
+                if(document.getElementById('back-to-login-link')) {
+                        document.getElementById('back-to-login-link').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            isSignup = false;
+                            showForm(loginForm);
+                            if (toggleAuthLink) {
+                                toggleAuthLink.classList.remove('hidden');
+                                toggleAuthLink.textContent = "Don't have an account? Sign up";
+                            }
+                        });
+                }
                 
                 function showForm(formToShow) {
                     if (loginForm) loginForm.classList.add('hidden');
@@ -625,6 +631,11 @@
                 async function setupProjectsPage() {
                     const evaluationContainer = document.getElementById('evaluation-container');
                     const projectsListContainer = document.getElementById('projects-list-container');
+                    
+                    if (!currentUser || !currentUser.uid) {
+                        console.error("No authenticated user found for project setup.");
+                        return;
+                    }
                     
                     const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
                     const docSnap = await getDoc(userProgressRef);
@@ -909,4 +920,7 @@
     </script>
 </body>
 </html>
+
+"
+I need the firebase SDK to be updated to the latest, 12.3.1. I need this to be applied in the whole document
 
