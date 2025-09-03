@@ -283,11 +283,21 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        const firebaseConfig = JSON.parse(
-            typeof __firebase_config !== 'undefined' 
+        const VERCEL_FALLBACK_CONFIG = {
+            apiKey: "AIzaSyCuy-81eqazvX3T9YBR-GWYDy7pal8Qnms",
+            authDomain: "sample-firebase-ai-app-f9512.firebaseapp.com",
+            projectId: "sample-firebase-ai-app-f9512",
+            storageBucket: "sample-firebase-ai-app-f9512.firebasestorage.app",
+            messagingSenderId: "5378166984",
+            appId: "1:5378166984:web:645064d773681120ee55fd"
+        };
+
+        const firebaseConfigString = typeof __firebase_config !== 'undefined' 
             ? __firebase_config 
-            : '{}'
-        );
+            : JSON.stringify(VERCEL_FALLBACK_CONFIG);
+
+        const firebaseConfig = JSON.parse(firebaseConfigString);
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-outlier-help';
 
         // --- Initialize Firebase ---
