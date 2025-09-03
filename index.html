@@ -282,633 +282,631 @@
             setDoc,
         } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
-        const VERCEL_FALLBACK_CONFIG = {
-            apiKey: "AIzaSyCBj0OcUbYYMPlHNZoyokIpKhlKpWUkU_Q",
-            authDomain: "outlier-420a8.firebaseapp.com",
-            projectId: "outlier-420a8",
-            storageBucket: "outlier-420a8.firebasestorage.app",
-            messagingSenderId: "449895404853",
-            appId: "1:449895404853:web:9bb10a3add516a1620287c",
-            measurementId: "G-TYXVKEEQRF"
-        };
-
-        const firebaseConfigString = typeof __firebase_config !== 'undefined' 
-            ? __firebase_config 
-            : JSON.stringify(VERCEL_FALLBACK_CONFIG);
-
-        const firebaseConfig = JSON.parse(firebaseConfigString);
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-outlier-help';
-
-        // --- Initialize Firebase ---
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch(error) {
-            console.error("Firebase initialization failed:", error);
-            document.getElementById('loading-spinner').classList.add('hidden');
-            const authSection = document.getElementById('auth-section');
-            if (authSection) {
-                authSection.classList.remove('hidden');
-                const authError = document.getElementById('auth-error');
-                if (authError) {
-                    authError.textContent = "Failed to connect to services. Please check configuration.";
-                }
-            }
-        }
-        
-
-        // --- DOM Elements ---
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const authSection = document.getElementById('auth-section');
-        const dashboardSection = document.getElementById('dashboard-section');
-        const authError = document.getElementById('auth-error');
-        const toggleAuthLink = document.getElementById('toggle-auth');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
-        const forgotPasswordForm = document.getElementById('forgot-password-form');
-
-        // --- App State ---
-        let currentUser = null;
-        let isSignup = false;
-        let isBgImageGenerated = false;
-        let isDashboardInitialized = false;
-
-        // --- Setup Functions ---
-        function setAuthError(message) {
-            if (authError) {
-                authError.textContent = message;
-                authError.classList.add('text-red-400');
-                authError.classList.remove('text-green-400');
-            }
-        }
-
-        function setAuthSuccess(message) {
-            if (authError) {
-                authError.textContent = message;
-                authError.classList.remove('text-red-400');
-                authError.classList.add('text-green-400');
-            }
-        }
-
-        function setupPasswordToggle(inputId, toggleButtonId, eyeIconId, eyeSlashIconId) {
-            const passwordInput = document.getElementById(inputId);
-            const toggleButton = document.getElementById(toggleButtonId);
-            const eyeIcon = document.getElementById(eyeIconId);
-            const eyeSlashIcon = document.getElementById(eyeSlashIconId);
-
-            if (!toggleButton || !passwordInput) return;
-
-            toggleButton.addEventListener('click', () => {
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    eyeIcon.classList.add('hidden');
-                    eyeSlashIcon.classList.remove('hidden');
-                } else {
-                    passwordInput.type = 'password';
-                    eyeIcon.classList.remove('hidden');
-                    eyeSlashIcon.classList.add('hidden');
-                }
-            });
-        }
-
-        // --- Authentication Logic ---
-        async function initAuth() {
-            if (!auth) return; // Don't run if Firebase failed to init
+        // --- App Initialization Function ---
+        function initApp() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                // --- Firebase Configuration ---
+                const VERCEL_FALLBACK_CONFIG = {
+                    apiKey: "AIzaSyCBj0OcUbYYMPlHNZoyokIpKhlKpWUkU_Q",
+                    authDomain: "outlier-420a8.firebaseapp.com",
+                    projectId: "outlier-420a8",
+                    storageBucket: "outlier-420a8.firebasestorage.app",
+                    messagingSenderId: "449895404853",
+                    appId: "1:449895404853:web:9bb10a3add516a1620287c",
+                    measurementId: "G-TYXVKEEQRF"
+                };
+
+                let firebaseConfig;
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                     firebaseConfig = JSON.parse(__firebase_config);
                 } else {
-                    await signInAnonymously(auth);
+                    firebaseConfig = VERCEL_FALLBACK_CONFIG;
                 }
-            } catch (error) {
-                console.error("Initial authentication failed:", error);
-                setAuthError("Could not connect to services. Please refresh.");
-            }
-        }
 
-        function setupAuthListeners() {
-            onAuthStateChanged(auth, async (user) => {
-                const authBg = document.getElementById('auth-background-container');
-                if (user && user.email) {
-                    currentUser = user;
-                    authSection.classList.add('hidden');
-                    dashboardSection.classList.remove('hidden');
-                    authBg.classList.add('opacity-0');
-                    document.getElementById('user-email').textContent = user.email;
-                    document.getElementById('mobile-user-email').textContent = user.email;
-                    if (!isDashboardInitialized) {
-                        await main();
-                        isDashboardInitialized = true;
-                    }
-                } else {
-                    currentUser = null;
-                    isDashboardInitialized = false;
-                    authSection.classList.remove('hidden');
-                    dashboardSection.classList.add('hidden');
-                    authBg.classList.remove('opacity-0');
-                    if (!isBgImageGenerated) {
-                        generateBackgroundImage();
-                        isBgImageGenerated = true;
-                    }
-                    setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
-                    setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
-                }
-                loadingSpinner.classList.add('hidden');
-            });
-        }
-        
-        // --- Auth Form UI Logic ---
-        if (toggleAuthLink) {
-            toggleAuthLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                isSignup = !isSignup;
-                if (isSignup) {
-                    showForm(signupForm);
-                    toggleAuthLink.textContent = 'Already have an account? Sign in';
-                } else {
-                    showForm(loginForm);
-                    toggleAuthLink.textContent = "Don't have an account? Sign up";
-                }
-            });
-        }
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-outlier-help';
 
-        if (document.getElementById('forgot-password-link')) {
-             document.getElementById('forgot-password-link').addEventListener('click', (e) => {
-                e.preventDefault();
-                showForm(forgotPasswordForm);
-                if (toggleAuthLink) toggleAuthLink.classList.add('hidden');
-            });
-        }
-
-       if(document.getElementById('back-to-login-link')) {
-            document.getElementById('back-to-login-link').addEventListener('click', (e) => {
-                e.preventDefault();
-                isSignup = false;
-                showForm(loginForm);
-                if (toggleAuthLink) {
-                    toggleAuthLink.classList.remove('hidden');
-                    toggleAuthLink.textContent = "Don't have an account? Sign up";
-                }
-            });
-       }
-        
-        function showForm(formToShow) {
-            if (loginForm) loginForm.classList.add('hidden');
-            if (signupForm) signupForm.classList.add('hidden');
-            if (forgotPasswordForm) forgotPasswordForm.classList.add('hidden');
-            if (formToShow) formToShow.classList.remove('hidden');
-            setAuthError('');
-        }
-        
-        // --- Auth Action Logic ---
-        if(document.getElementById('login-button')){
-            document.getElementById('login-button').addEventListener('click', async () => {
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                setAuthError('');
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (error) {
-                    setAuthError(error.message);
-                }
-            });
-        }
-
-        if(document.getElementById('signup-button')){
-            document.getElementById('signup-button').addEventListener('click', async () => {
-                const email = document.getElementById('signup-email').value;
-                const password = document.getElementById('signup-password').value;
-                setAuthError('');
-                try {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                } catch (error) {
-                    setAuthError(error.message);
-                }
-            });
-        }
-
-        if(document.getElementById('send-reset-button')){
-            document.getElementById('send-reset-button').addEventListener('click', async () => {
-                const email = document.getElementById('reset-email').value;
-                setAuthError('');
-                try {
-                    await sendPasswordResetEmail(auth, email);
-                    setAuthSuccess('Password reset email sent! Check your inbox.');
-                } catch (error) {
-                    setAuthError(error.message);
-                }
-            });
-        }
-
-        if(document.getElementById('google-signin-button')){
-            document.getElementById('google-signin-button').addEventListener('click', async () => {
-                const provider = new GoogleAuthProvider();
-                setAuthError('');
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (error) {
-                    setAuthError(error.message);
-                }
-            });
-        }
-        
-        function handleSignOut() {
-             signOut(auth);
-        }
-
-        if(document.getElementById('signout-button')) document.getElementById('signout-button').addEventListener('click', handleSignOut);
-        if(document.getElementById('mobile-signout-button')) document.getElementById('mobile-signout-button').addEventListener('click', handleSignOut);
-        
-        
-        // --- Dashboard Logic ---
-        async function main() {
-            const navLinks = document.querySelectorAll('.nav-link');
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            
-            if(mobileMenuButton) {
-                mobileMenuButton.addEventListener('click', () => {
-                    const mobileMenu = document.getElementById('mobile-menu');
-                    const hamburgerIcon = document.getElementById('hamburger-icon');
-                    const closeIcon = document.getElementById('close-icon');
-                    const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
-                    mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
-                    mobileMenu.classList.toggle('hidden');
-                    hamburgerIcon.classList.toggle('hidden');
-                    closeIcon.classList.toggle('hidden');
-                });
-            }
-            
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    const mobileMenu = document.getElementById('mobile-menu');
-                    const mobileMenuButton = document.getElementById('mobile-menu-button');
-                    const hamburgerIcon = document.getElementById('hamburger-icon');
-                    const closeIcon = document.getElementById('close-icon');
-
-                    if(mobileMenu) mobileMenu.classList.add('hidden');
-                    if(hamburgerIcon) hamburgerIcon.classList.remove('hidden');
-                    if(closeIcon) closeIcon.classList.add('hidden');
-                    if(mobileMenuButton) mobileMenuButton.setAttribute('aria-expanded', 'false');
-                });
-            });
-
-            function updateActiveLink(hash) {
-                navLinks.forEach(link => {
-                    if (link.hash === hash) {
-                        link.classList.add('bg-gray-900', 'text-white');
-                        link.classList.remove('text-gray-300', 'hover:bg-gray-700');
-                    } else {
-                        link.classList.remove('bg-gray-900', 'text-white');
-                        link.classList.add('text-gray-300', 'hover:bg-gray-700');
-                    }
-                });
-            }
-            
-            async function loadContent() {
-                try {
-                    const hash = window.location.hash || '#about';
-                    updateActiveLink(hash);
-                    let templateId;
-                    switch(hash) {
-                        case '#menu': templateId = 'menu-template'; break;
-                        case '#projects': templateId = 'projects-template'; break;
-                        case '#about': default: templateId = 'about-template'; break;
-                    }
-                    const template = document.getElementById(templateId);
-                    const pageContent = document.getElementById('page-content');
-                    if(template && pageContent) {
-                        pageContent.innerHTML = template.innerHTML;
-                    }
-
-                    if (hash === '#projects') {
-                        await setupProjectsPage();
-                    }
-                } catch (error) {
-                    console.error("Error loading page content:", error);
-                    const pageContent = document.getElementById('page-content');
-                    if(pageContent) {
-                        pageContent.innerHTML = `<div class="text-center text-red-400">Failed to load content. Please try again.</div>`;
-                    }
-                }
-            }
-            
-            window.addEventListener('hashchange', loadContent);
-            await loadContent(); // Initial load
-        }
-        
-        // --- Projects Page Logic ---
-        const assessments = [
-            {
-                prompt: "Critically assess John Searle's 'Chinese Room' argument against Strong AI in the context of modern Large Language Models (LLMs) like GPT-4. Does the argument retain its validity?",
-                responseA: "Searle's argument is outdated. The sheer scale and emergent capabilities of models like GPT-4 demonstrate a form of understanding that transcends simple symbol manipulation. Their ability to generate coherent, context-aware text suggests they are not just syntax engines but have achieved a level of semantic comprehension.",
-                responseB: "The 'Chinese Room' argument remains fundamentally valid. LLMs, despite their complexity, are sophisticated statistical pattern matchers operating on syntax, not semantics. They manipulate symbols based on probabilistic relationships learned from data, without genuine consciousness or intentionality, making them a more advanced, but functionally equivalent, version of the room.",
-                expertHint: "A PhD-level analysis must recognize that LLMs operate on statistical patterns without true semantic understanding, which supports Searle's core claim. Therefore, Response B is philosophically more sound. A strong justification for B would highlight the distinction between functional simulation and genuine intentionality. A justification for A would be incorrect as it conflates complex pattern matching with semantic comprehension."
-            },
-            {
-                prompt: "Explain the core paradox of black hole information loss and summarize the leading proposed solution derived from the AdS/CFT correspondence.",
-                responseA: "The paradox is that black holes seem to destroy information, which quantum mechanics forbids. Hawking radiation, the stuff that leaks out, is random and contains no information. The solution from string theory is that the information might be stored in some other dimension we can't see.",
-                responseB: "The paradox arises from the conflict between general relativity's 'no-hair theorem' and the principle of unitarity in quantum mechanics. Unitarity demands that information is conserved, but Hawking radiation appears thermal and information-free. The AdS/CFT correspondence suggests a holographic principle, where the information of a black hole isn't lost but is holographically encoded on its event horizon, a lower-dimensional boundary, thus preserving unitarity.",
-                expertHint: "Response B is vastly superior as it uses precise terminology (unitarity, no-hair theorem, holographic principle) and correctly identifies the central conflict and the mechanism of the proposed solution. Response A is a pop-science oversimplification and is incorrect for this level of analysis."
-            },
-            {
-                prompt: "Analyze the use of intertextuality in T.S. Eliot's 'The Waste Land' as a reflection of post-war modernist fragmentation.",
-                responseA: "The poem uses a lot of quotes and references to other books. This shows that European culture was broken and in pieces after World War I, and Eliot is showing all the broken parts.",
-                responseB: "Eliot employs a mosaic of literary and cultural allusions, not as mere ornamentation, but to construct a fragmented consciousness reflecting a collapsed cultural narrative. By juxtaposing classical myths with contemporary squalor, he illustrates the disintegration of a coherent tradition, forcing the reader to actively participate in the difficult construction of meaning from cultural ruins.",
-                expertHint: "Response B provides a deep, PhD-level analysis. It uses key literary terms correctly ('mosaic', 'juxtaposing', 'construction of meaning') and understands the active role the reader must play, which is a core concept of modernist literature. Response A grasps the basic idea but lacks the necessary analytical depth and terminology."
-            },
-            {
-                prompt: "Critically evaluate the Lucas critique's implications for macroeconomic policy-making, particularly in the context of modern Dynamic Stochastic General Equilibrium (DSGE) models.",
-                responseA: "The Lucas critique proved that you can't trust old economic models because people aren't stupid; they change how they act when the government changes a policy. So you can't use past data to predict the future.",
-                responseB: "The Lucas critique fundamentally challenged traditional Keynesian macroeconometric models by asserting that policy interventions alter agents' expectations and behaviors, thus invalidating model parameters previously assumed to be structural. Modern DSGE models attempt to address this by building from microfoundations with rational expectations, but they remain susceptible to the critique if their 'deep' parameters regarding preferences and technology are not truly policy-invariant or if agents' expectation formation is misspecified.",
-                expertHint: "Response B is the expert answer. It correctly identifies the target of the critique (Keynesian models), the mechanism (agents' expectations and structural parameters), and correctly explains how DSGE models try—and sometimes fail—to solve it. Response A is an oversimplification that misses the key concepts of structural parameters and microfoundations."
-            },
-            {
-                prompt: "Compare and contrast the principles and primary use cases of BLAST (Basic Local Alignment Search Tool) and the Smith-Waterman algorithm for sequence alignment.",
-                responseA: "Both are tools for comparing DNA sequences. BLAST is just a faster version of Smith-Waterman that you use for big databases. Smith-Waterman is more accurate for finding the best match but it's too slow for most things.",
-                responseB: "The Smith-Waterman algorithm is a dynamic programming method that mathematically guarantees finding the optimal local alignment (highest score), making it the gold standard for sensitivity. Its quadratic time complexity, however, makes it computationally prohibitive for large-scale searches. In contrast, BLAST is a heuristic algorithm that sacrifices this guaranteed optimality for immense speed by finding short, high-scoring word 'seeds' to initiate alignments, making it the standard for rapid database homology searches.",
-                expertHint: "Response B is the correct, PhD-level comparison. It correctly identifies the core algorithmic difference (dynamic programming vs. heuristic), the fundamental trade-off (guaranteed optimality vs. speed), and the precise technical reason for BLAST's speed ('word seeds'). Response A is a superficial summary that lacks critical details."
-            }
-        ];
-        let currentAssessmentIndex = 0;
-
-
-        async function setupProjectsPage() {
-            const evaluationContainer = document.getElementById('evaluation-container');
-            const projectsListContainer = document.getElementById('projects-list-container');
-            
-            const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
-            const docSnap = await getDoc(userProgressRef);
-
-            if (docSnap.exists() && docSnap.data().assessments_passed === true) {
-                showProjects();
-                return;
-            }
-
-            if(evaluationContainer) evaluationContainer.classList.remove('hidden');
-            if(projectsListContainer) projectsListContainer.classList.add('hidden');
-            renderCurrentAssessment();
-
-            const submitButton = document.getElementById('submit-evaluation-button');
-            if(submitButton) {
-                submitButton.addEventListener('click', handleAssessmentSubmission);
-            }
-        }
-        
-        function renderCurrentAssessment() {
-            const assessment = assessments[currentAssessmentIndex];
-            const contentEl = document.getElementById('assessment-content');
-            
-            if(contentEl) {
-                contentEl.innerHTML = `
-                    <h2 class="text-xl font-bold tracking-tight text-white">Assessment ${currentAssessmentIndex + 1} of ${assessments.length}</h2>
-                    <p class="mt-2 text-gray-400">Read the prompt and the two AI responses. Rate which response is better and justify your answer.</p>
-                    
-                    <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
-                        <h3 class="font-semibold text-teal-300">Prompt:</h3>
-                        <p class="mt-1 text-white">"${assessment.prompt}"</p>
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                            <h4 class="font-semibold text-gray-300">Response A</h4>
-                            <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseA}</p>
-                        </div>
-                        <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                            <h4 class="font-semibold text-gray-300">Response B</h4>
-                            <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseB}</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-6">
-                        <h3 class="font-semibold text-white">1. Which response is better? (1 = A is much better, 5 = B is much better)</h3>
-                        <fieldset class="mt-2">
-                            <div class="flex items-center justify-between sm:justify-start sm:space-x-4">
-                                <span class="text-sm text-gray-400">A</span>
-                                <div class="flex items-center space-x-2">
-                                    ${[1,2,3,4,5].map(rating => `
-                                    <label for="rating-${rating}" class="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-700 hover:bg-gray-600 cursor-pointer transition-all duration-200 peer-checked:bg-teal-700">
-                                        <input type="radio" name="rating" id="rating-${rating}" value="${rating}" class="peer absolute opacity-0">
-                                        <span class="text-white peer-checked:text-white peer-checked:font-bold">${rating}</span>
-                                    </label>
-                                    `).join('')}
-                                </div>
-                                <span class="text-sm text-gray-400">B</span>
-                            </div>
-                        </fieldset>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <h3 class="font-semibold text-white">2. Justify your rating:</h3>
-                        <textarea id="assessment-justification" rows="4" class="mt-2 block w-full rounded-md border-0 bg-gray-900/80 p-3 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm" placeholder="Explain your reasoning here..."></textarea>
-                    </div>
-                `;
-            }
-        }
-
-        async function handleAssessmentSubmission() {
-            const selectedRating = document.querySelector('input[name="rating"]:checked');
-            const justificationInput = document.getElementById('assessment-justification');
-            const justification = justificationInput ? justificationInput.value.trim() : '';
-            const resultEl = document.getElementById('evaluation-result');
-
-            if (!selectedRating) {
-                if(resultEl) {
-                    resultEl.textContent = 'Please select a rating from 1 to 5.';
-                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
-                }
-                return;
-            }
-            if (justification.length < 15) {
-                if(resultEl){
-                    resultEl.textContent = 'Please provide a more detailed justification (at least 15 characters).';
-                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
-                }
-                return;
-            }
-
-            const submitButton = document.getElementById('submit-evaluation-button');
-            const submitBtnText = document.getElementById('submit-btn-text');
-            const submitSpinner = document.getElementById('submit-spinner');
-            
-            if(submitButton) submitButton.disabled = true;
-            if(submitBtnText) submitBtnText.textContent = 'Grading...';
-            if(submitSpinner) submitSpinner.classList.remove('hidden');
-            if(resultEl) resultEl.textContent = '';
-
-            try {
-                const aiResult = await gradeWithAI(assessments[currentAssessmentIndex], selectedRating.value, justification);
-
-                if (aiResult.passed) {
-                    currentAssessmentIndex++;
-                    if (currentAssessmentIndex >= assessments.length) {
-                        if(resultEl) {
-                            resultEl.textContent = 'Congratulations! You have passed all assessments.';
-                            resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
-                        }
-                        const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
-                        await setDoc(userProgressRef, { assessments_passed: true });
-                        setTimeout(showProjects, 2000);
-                    } else {
-                         if(resultEl) {
-                            resultEl.textContent = 'Correct! Moving to the next assessment.';
-                            resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
-                        }
-                        setTimeout(() => {
-                            if(resultEl) resultEl.textContent = '';
-                            renderCurrentAssessment();
-                        }, 1500);
-                    }
-                } else {
-                    if(resultEl){
-                        resultEl.innerHTML = `Incorrect. The AI grader provided this feedback: <br/><em class="text-gray-300">"${aiResult.reason}"</em>. Please re-evaluate and try again.`;
-                        resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
-                    }
-                }
-            } catch (error) {
-                console.error('AI Grading Error:', error);
-                if(resultEl) {
-                    resultEl.textContent = 'An error occurred during grading. Please try again later.';
-                    resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
-                }
-            } finally {
-                if(submitButton) submitButton.disabled = false;
-                if(submitBtnText) submitBtnText.textContent = 'Submit Assessment';
-                if(submitSpinner) submitSpinner.classList.add('hidden');
-            }
-        }
-
-
-        function showProjects() {
-            const evalContainer = document.getElementById('evaluation-container');
-            const projectsListContainer = document.getElementById('projects-list-container');
-            if(evalContainer) evalContainer.classList.add('hidden');
-            if(projectsListContainer) projectsListContainer.classList.remove('hidden');
-
-            const allProjects = [ 
-                { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, 
-                { name: "Rhind Evals" }, { name: "Blueberry Bagels" }, { name: "Cloud Evals" }, { name: "S Knees Man" }, 
-                { name: "Mascara Mambo" }, { name: "Glue Sail" }, { name: "Bettascope Rubrics" }, 
-                { name: "Multilingual Static Comparison v2" }, { name: "Cloud Evals V3" }, { name: "Cypher Evals V3" }, 
-                { name: "Summer Robin" }, { name: "Big Mallet" } 
-            ];
-            
-            const listElement = document.getElementById('projects-list');
-            if(listElement) {
-                listElement.innerHTML = ''; // Clear previous list
-                allProjects.forEach(project => {
-                    const li = document.createElement('li');
-                    li.className = "col-span-1 flex flex-col rounded-lg bg-gray-700/50 text-center shadow transition-all duration-300 hover:scale-105 hover:border-teal-500 border border-transparent";
-                    li.innerHTML = `
-                        <div class="flex flex-1 flex-col p-8 justify-center">
-                            <h3 class="text-base font-medium text-white">${project.name}</h3>
-                        </div>
-                    `;
-                    listElement.appendChild(li);
-                });
-            }
-        }
-
-        async function gradeWithAI(assessment, userRating, userJustification) {
-             const apiKey = ""; // Canvas will provide this
-             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            const systemPrompt = `You are an expert AI system that grades a junior evaluator's work.
-            You will be given an 'expertHint' that contains the correct reasoning.
-            You must evaluate if the junior evaluator's rating and justification align with the expertHint.
-            The user's rating is on a scale of 1-5, where 1 means Response A is much better, and 5 means Response B is much better. A 3 is neutral.
-
-            Your response MUST be in JSON format.
-            - If the user's logic is sound and aligns with the expert hint, return: {"passed": true, "reason": "The user's reasoning is sound."}
-            - If the user's logic is flawed, their rating is incorrect, or they miss the key points from the expert hint, return: {"passed": false, "reason": "A brief, helpful explanation for why they were wrong. For example: 'Your justification missed the key point that Response B was too technical for the audience.'"}
-            
-            Be strict but fair. The user doesn't have to match the hint word-for-word, but their core reasoning must be correct.
-            Do not add any other text outside the JSON object.
-            `;
-            
-            const userQuery = `
-                Expert Hint: "${assessment.expertHint}"
-                ---
-                User's Rating (1-5): ${userRating}
-                User's Justification: "${userJustification}"
-            `;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                }
-            };
-            
-            let response;
-            let attempts = 0;
-            const maxAttempts = 5;
-            while(attempts < maxAttempts) {
-                try {
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) break;
-                } catch (error) {
-                    console.error(`Attempt ${attempts + 1} failed`, error);
-                }
-                attempts++;
-                await new Promise(res => setTimeout(res, Math.pow(2, attempts) * 1000));
-            }
-            
-            if (!response || !response.ok) {
-                 throw new Error('AI service is unavailable after multiple retries.');
-            }
-
-            const result = await response.json();
-            const jsonString = result.candidates[0].content.parts[0].text;
-            return JSON.parse(jsonString);
-        }
-
-        async function generateBackgroundImage() {
-            const bgImage = document.getElementById('auth-bg-image');
-            const apiKey = ""; // Canvas will provide this
-             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-
-            const prompt = "A modern, abstract background with flowing teal and dark gray lines, minimalist digital art, cinematic lighting.";
-
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseModalities: ['IMAGE'] },
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`API call failed: ${response.status}`);
-                const result = await response.json();
-                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                // --- Initialize Firebase ---
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
                 
-                if (base64Data) {
-                    bgImage.src = `data:image/png;base64,${base64Data}`;
-                } else {
-                    throw new Error('No image data in response.');
+                // --- DOM Elements ---
+                const loadingSpinner = document.getElementById('loading-spinner');
+                const authSection = document.getElementById('auth-section');
+                const dashboardSection = document.getElementById('dashboard-section');
+                const authError = document.getElementById('auth-error');
+                const toggleAuthLink = document.getElementById('toggle-auth');
+                const loginForm = document.getElementById('login-form');
+                const signupForm = document.getElementById('signup-form');
+                const forgotPasswordForm = document.getElementById('forgot-password-form');
+
+                // --- App State ---
+                let currentUser = null;
+                let isSignup = false;
+                let isBgImageGenerated = false;
+                let isDashboardInitialized = false;
+
+                // --- Setup Functions ---
+                function setAuthError(message) {
+                    if (authError) {
+                        authError.textContent = message;
+                        authError.classList.add('text-red-400');
+                        authError.classList.remove('text-green-400');
+                    }
                 }
+
+                function setAuthSuccess(message) {
+                    if (authError) {
+                        authError.textContent = message;
+                        authError.classList.remove('text-red-400');
+                        authError.classList.add('text-green-400');
+                    }
+                }
+
+                function setupPasswordToggle(inputId, toggleButtonId, eyeIconId, eyeSlashIconId) {
+                    const passwordInput = document.getElementById(inputId);
+                    const toggleButton = document.getElementById(toggleButtonId);
+                    const eyeIcon = document.getElementById(eyeIconId);
+                    const eyeSlashIcon = document.getElementById(eyeSlashIconId);
+
+                    if (!toggleButton || !passwordInput) return;
+
+                    toggleButton.addEventListener('click', () => {
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            eyeIcon.classList.add('hidden');
+                            eyeSlashIcon.classList.remove('hidden');
+                        } else {
+                            passwordInput.type = 'password';
+                            eyeIcon.classList.remove('hidden');
+                            eyeSlashIcon.classList.add('hidden');
+                        }
+                    });
+                }
+
+                // --- Authentication Logic ---
+                async function initAuth() {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Initial authentication failed:", error);
+                        setAuthError("Could not connect to services. Please refresh.");
+                    }
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    const authBg = document.getElementById('auth-background-container');
+                    if (user && user.email) {
+                        currentUser = user;
+                        authSection.classList.add('hidden');
+                        dashboardSection.classList.remove('hidden');
+                        authBg.classList.add('opacity-0');
+                        document.getElementById('user-email').textContent = user.email;
+                        document.getElementById('mobile-user-email').textContent = user.email;
+                        if (!isDashboardInitialized) {
+                            await main();
+                            isDashboardInitialized = true;
+                        }
+                    } else {
+                        currentUser = user; // It can be an anonymous user
+                        isDashboardInitialized = false;
+                        authSection.classList.remove('hidden');
+                        dashboardSection.classList.add('hidden');
+                        authBg.classList.remove('opacity-0');
+                        if (!isBgImageGenerated) {
+                            generateBackgroundImage();
+                            isBgImageGenerated = true;
+                        }
+                        setupPasswordToggle('login-password', 'login-password-toggle', 'login-eye-icon', 'login-eye-slash-icon');
+                        setupPasswordToggle('signup-password', 'signup-password-toggle', 'signup-eye-icon', 'signup-eye-slash-icon');
+                    }
+                    loadingSpinner.classList.add('hidden');
+                });
+                
+                // --- Auth Form UI Logic ---
+                if (toggleAuthLink) {
+                    toggleAuthLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        isSignup = !isSignup;
+                        if (isSignup) {
+                            showForm(signupForm);
+                            toggleAuthLink.textContent = 'Already have an account? Sign in';
+                        } else {
+                            showForm(loginForm);
+                            toggleAuthLink.textContent = "Don't have an account? Sign up";
+                        }
+                    });
+                }
+
+                if (document.getElementById('forgot-password-link')) {
+                    document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showForm(forgotPasswordForm);
+                        if (toggleAuthLink) toggleAuthLink.classList.add('hidden');
+                    });
+                }
+
+            if(document.getElementById('back-to-login-link')) {
+                    document.getElementById('back-to-login-link').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        isSignup = false;
+                        showForm(loginForm);
+                        if (toggleAuthLink) {
+                            toggleAuthLink.classList.remove('hidden');
+                            toggleAuthLink.textContent = "Don't have an account? Sign up";
+                        }
+                    });
+            }
+                
+                function showForm(formToShow) {
+                    if (loginForm) loginForm.classList.add('hidden');
+                    if (signupForm) signupForm.classList.add('hidden');
+                    if (forgotPasswordForm) forgotPasswordForm.classList.add('hidden');
+                    if (formToShow) formToShow.classList.remove('hidden');
+                    setAuthError('');
+                }
+                
+                // --- Auth Action Handlers ---
+                if(document.getElementById('login-button')){
+                    document.getElementById('login-button').addEventListener('click', async () => {
+                        const email = document.getElementById('login-email').value;
+                        const password = document.getElementById('login-password').value;
+                        setAuthError('');
+                        try {
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } catch (error) {
+                            setAuthError(error.message);
+                        }
+                    });
+                }
+
+                if(document.getElementById('signup-button')){
+                    document.getElementById('signup-button').addEventListener('click', async () => {
+                        const email = document.getElementById('signup-email').value;
+                        const password = document.getElementById('signup-password').value;
+                        setAuthError('');
+                        try {
+                            await createUserWithEmailAndPassword(auth, email, password);
+                        } catch (error) {
+                            setAuthError(error.message);
+                        }
+                    });
+                }
+
+                if(document.getElementById('send-reset-button')){
+                    document.getElementById('send-reset-button').addEventListener('click', async () => {
+                        const email = document.getElementById('reset-email').value;
+                        setAuthError('');
+                        try {
+                            await sendPasswordResetEmail(auth, email);
+                            setAuthSuccess('Password reset email sent! Check your inbox.');
+                        } catch (error) {
+                            setAuthError(error.message);
+                        }
+                    });
+                }
+
+                if(document.getElementById('google-signin-button')){
+                    document.getElementById('google-signin-button').addEventListener('click', async () => {
+                        const provider = new GoogleAuthProvider();
+                        setAuthError('');
+                        try {
+                            await signInWithPopup(auth, provider);
+                        } catch (error) {
+                            setAuthError(error.message);
+                        }
+                    });
+                }
+                
+                function handleSignOut() {
+                    signOut(auth);
+                }
+
+                if(document.getElementById('signout-button')) document.getElementById('signout-button').addEventListener('click', handleSignOut);
+                if(document.getElementById('mobile-signout-button')) document.getElementById('mobile-signout-button').addEventListener('click', handleSignOut);
+                
+                
+                // --- Dashboard Logic ---
+                async function main() {
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    const mobileMenuButton = document.getElementById('mobile-menu-button');
+                    
+                    if(mobileMenuButton) {
+                        mobileMenuButton.addEventListener('click', () => {
+                            const mobileMenu = document.getElementById('mobile-menu');
+                            const hamburgerIcon = document.getElementById('hamburger-icon');
+                            const closeIcon = document.getElementById('close-icon');
+                            const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                            mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                            mobileMenu.classList.toggle('hidden');
+                            hamburgerIcon.classList.toggle('hidden');
+                            closeIcon.classList.toggle('hidden');
+                        });
+                    }
+                    
+                    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                        link.addEventListener('click', () => {
+                            const mobileMenu = document.getElementById('mobile-menu');
+                            const mobileMenuButton = document.getElementById('mobile-menu-button');
+                            const hamburgerIcon = document.getElementById('hamburger-icon');
+                            const closeIcon = document.getElementById('close-icon');
+
+                            if(mobileMenu) mobileMenu.classList.add('hidden');
+                            if(hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+                            if(closeIcon) closeIcon.classList.add('hidden');
+                            if(mobileMenuButton) mobileMenuButton.setAttribute('aria-expanded', 'false');
+                        });
+                    });
+
+                    function updateActiveLink(hash) {
+                        navLinks.forEach(link => {
+                            if (link.hash === hash) {
+                                link.classList.add('bg-gray-900', 'text-white');
+                                link.classList.remove('text-gray-300', 'hover:bg-gray-700');
+                            } else {
+                                link.classList.remove('bg-gray-900', 'text-white');
+                                link.classList.add('text-gray-300', 'hover:bg-gray-700');
+                            }
+                        });
+                    }
+                    
+                    async function loadContent() {
+                        try {
+                            const hash = window.location.hash || '#about';
+                            updateActiveLink(hash);
+                            let templateId;
+                            switch(hash) {
+                                case '#menu': templateId = 'menu-template'; break;
+                                case '#projects': templateId = 'projects-template'; break;
+                                case '#about': default: templateId = 'about-template'; break;
+                            }
+                            const template = document.getElementById(templateId);
+                            const pageContent = document.getElementById('page-content');
+                            if(template && pageContent) {
+                                pageContent.innerHTML = template.innerHTML;
+                            }
+
+                            if (hash === '#projects') {
+                                await setupProjectsPage();
+                            }
+                        } catch (error) {
+                            console.error("Error loading page content:", error);
+                            const pageContent = document.getElementById('page-content');
+                            if(pageContent) {
+                                pageContent.innerHTML = `<div class="text-center text-red-400">Failed to load content. Please try again.</div>`;
+                            }
+                        }
+                    }
+                    
+                    window.addEventListener('hashchange', loadContent);
+                    await loadContent(); // Initial load
+                }
+                
+                // --- Projects Page Logic ---
+                const assessments = [
+                    {
+                        prompt: "Critically assess John Searle's 'Chinese Room' argument against Strong AI in the context of modern Large Language Models (LLMs) like GPT-4. Does the argument retain its validity?",
+                        responseA: "Searle's argument is outdated. The sheer scale and emergent capabilities of models like GPT-4 demonstrate a form of understanding that transcends simple symbol manipulation. Their ability to generate coherent, context-aware text suggests they are not just syntax engines but have achieved a level of semantic comprehension.",
+                        responseB: "The 'Chinese Room' argument remains fundamentally valid. LLMs, despite their complexity, are sophisticated statistical pattern matchers operating on syntax, not semantics. They manipulate symbols based on probabilistic relationships learned from data, without genuine consciousness or intentionality, making them a more advanced, but functionally equivalent, version of the room.",
+                        expertHint: "A PhD-level analysis must recognize that LLMs operate on statistical patterns without true semantic understanding, which supports Searle's core claim. Therefore, Response B is philosophically more sound. A strong justification for B would highlight the distinction between functional simulation and genuine intentionality. A justification for A would be incorrect as it conflates complex pattern matching with semantic comprehension."
+                    },
+                    {
+                        prompt: "Explain the core paradox of black hole information loss and summarize the leading proposed solution derived from the AdS/CFT correspondence.",
+                        responseA: "The paradox is that black holes seem to destroy information, which quantum mechanics forbids. Hawking radiation, the stuff that leaks out, is random and contains no information. The solution from string theory is that the information might be stored in some other dimension we can't see.",
+                        responseB: "The paradox arises from the conflict between general relativity's 'no-hair theorem' and the principle of unitarity in quantum mechanics. Unitarity demands that information is conserved, but Hawking radiation appears thermal and information-free. The AdS/CFT correspondence suggests a holographic principle, where the information of a black hole isn't lost but is holographically encoded on its event horizon, a lower-dimensional boundary, thus preserving unitarity.",
+                        expertHint: "Response B is vastly superior as it uses precise terminology (unitarity, no-hair theorem, holographic principle) and correctly identifies the central conflict and the mechanism of the proposed solution. Response A is a pop-science oversimplification and is incorrect for this level of analysis."
+                    },
+                    {
+                        prompt: "Analyze the use of intertextuality in T.S. Eliot's 'The Waste Land' as a reflection of post-war modernist fragmentation.",
+                        responseA: "The poem uses a lot of quotes and references to other books. This shows that European culture was broken and in pieces after World War I, and Eliot is showing all the broken parts.",
+                        responseB: "Eliot employs a mosaic of literary and cultural allusions, not as mere ornamentation, but to construct a fragmented consciousness reflecting a collapsed cultural narrative. By juxtaposing classical myths with contemporary squalor, he illustrates the disintegration of a coherent tradition, forcing the reader to actively participate in the difficult construction of meaning from cultural ruins.",
+                        expertHint: "Response B provides a deep, PhD-level analysis. It uses key literary terms correctly ('mosaic', 'juxtaposing', 'construction of meaning') and understands the active role the reader must play, which is a core concept of modernist literature. Response A grasps the basic idea but lacks the necessary analytical depth and terminology."
+                    },
+                    {
+                        prompt: "Critically evaluate the Lucas critique's implications for macroeconomic policy-making, particularly in the context of modern Dynamic Stochastic General Equilibrium (DSGE) models.",
+                        responseA: "The Lucas critique proved that you can't trust old economic models because people aren't stupid; they change how they act when the government changes a policy. So you can't use past data to predict the future.",
+                        responseB: "The Lucas critique fundamentally challenged traditional Keynesian macroeconometric models by asserting that policy interventions alter agents' expectations and behaviors, thus invalidating model parameters previously assumed to be structural. Modern DSGE models attempt to address this by building from microfoundations with rational expectations, but they remain susceptible to the critique if their 'deep' parameters regarding preferences and technology are not truly policy-invariant or if agents' expectation formation is misspecified.",
+                        expertHint: "Response B is the expert answer. It correctly identifies the target of the critique (Keynesian models), the mechanism (agents' expectations and structural parameters), and correctly explains how DSGE models try—and sometimes fail—to solve it. Response A is an oversimplification that misses the key concepts of structural parameters and microfoundations."
+                    },
+                    {
+                        prompt: "Compare and contrast the principles and primary use cases of BLAST (Basic Local Alignment Search Tool) and the Smith-Waterman algorithm for sequence alignment.",
+                        responseA: "Both are tools for comparing DNA sequences. BLAST is just a faster version of Smith-Waterman that you use for big databases. Smith-Waterman is more accurate for finding the best match but it's too slow for most things.",
+                        responseB: "The Smith-Waterman algorithm is a dynamic programming method that mathematically guarantees finding the optimal local alignment (highest score), making it the gold standard for sensitivity. Its quadratic time complexity, however, makes it computationally prohibitive for large-scale searches. In contrast, BLAST is a heuristic algorithm that sacrifices this guaranteed optimality for immense speed by finding short, high-scoring word 'seeds' to initiate alignments, making it the standard for rapid database homology searches.",
+                        expertHint: "Response B is the correct, PhD-level comparison. It correctly identifies the core algorithmic difference (dynamic programming vs. heuristic), the fundamental trade-off (guaranteed optimality vs. speed), and the precise technical reason for BLAST's speed ('word seeds'). Response A is a superficial summary that lacks critical details."
+                    }
+                ];
+                let currentAssessmentIndex = 0;
+
+
+                async function setupProjectsPage() {
+                    const evaluationContainer = document.getElementById('evaluation-container');
+                    const projectsListContainer = document.getElementById('projects-list-container');
+                    
+                    const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
+                    const docSnap = await getDoc(userProgressRef);
+
+                    if (docSnap.exists() && docSnap.data().assessments_passed === true) {
+                        showProjects();
+                        return;
+                    }
+
+                    if(evaluationContainer) evaluationContainer.classList.remove('hidden');
+                    if(projectsListContainer) projectsListContainer.classList.add('hidden');
+                    renderCurrentAssessment();
+
+                    const submitButton = document.getElementById('submit-evaluation-button');
+                    if(submitButton) {
+                        submitButton.addEventListener('click', handleAssessmentSubmission);
+                    }
+                }
+                
+                function renderCurrentAssessment() {
+                    const assessment = assessments[currentAssessmentIndex];
+                    const contentEl = document.getElementById('assessment-content');
+                    
+                    if(contentEl) {
+                        contentEl.innerHTML = `
+                            <h2 class="text-xl font-bold tracking-tight text-white">Assessment ${currentAssessmentIndex + 1} of ${assessments.length}</h2>
+                            <p class="mt-2 text-gray-400">Read the prompt and the two AI responses. Rate which response is better and justify your answer.</p>
+                            
+                            <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
+                                <h3 class="font-semibold text-teal-300">Prompt:</h3>
+                                <p class="mt-1 text-white">"${assessment.prompt}"</p>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                                    <h4 class="font-semibold text-gray-300">Response A</h4>
+                                    <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseA}</p>
+                                </div>
+                                <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                                    <h4 class="font-semibold text-gray-300">Response B</h4>
+                                    <p class="mt-2 text-gray-300 leading-relaxed">${assessment.responseB}</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <h3 class="font-semibold text-white">1. Which response is better? (1 = A is much better, 5 = B is much better)</h3>
+                                <fieldset class="mt-2">
+                                    <div class="flex items-center justify-between sm:justify-start sm:space-x-4">
+                                        <span class="text-sm text-gray-400">A</span>
+                                        <div class="flex items-center space-x-2">
+                                            ${[1,2,3,4,5].map(rating => `
+                                            <label for="rating-${rating}" class="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-700 hover:bg-gray-600 cursor-pointer transition-all duration-200 peer-checked:bg-teal-700">
+                                                <input type="radio" name="rating" id="rating-${rating}" value="${rating}" class="peer absolute opacity-0">
+                                                <span class="text-white peer-checked:text-white peer-checked:font-bold">${rating}</span>
+                                            </label>
+                                            `).join('')}
+                                        </div>
+                                        <span class="text-sm text-gray-400">B</span>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h3 class="font-semibold text-white">2. Justify your rating:</h3>
+                                <textarea id="assessment-justification" rows="4" class="mt-2 block w-full rounded-md border-0 bg-gray-900/80 p-3 text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm" placeholder="Explain your reasoning here..."></textarea>
+                            </div>
+                        `;
+                    }
+                }
+
+                async function handleAssessmentSubmission() {
+                    const selectedRating = document.querySelector('input[name="rating"]:checked');
+                    const justificationInput = document.getElementById('assessment-justification');
+                    const justification = justificationInput ? justificationInput.value.trim() : '';
+                    const resultEl = document.getElementById('evaluation-result');
+
+                    if (!selectedRating) {
+                        if(resultEl) {
+                            resultEl.textContent = 'Please select a rating from 1 to 5.';
+                            resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                        }
+                        return;
+                    }
+                    if (justification.length < 15) {
+                        if(resultEl){
+                            resultEl.textContent = 'Please provide a more detailed justification (at least 15 characters).';
+                            resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                        }
+                        return;
+                    }
+
+                    const submitButton = document.getElementById('submit-evaluation-button');
+                    const submitBtnText = document.getElementById('submit-btn-text');
+                    const submitSpinner = document.getElementById('submit-spinner');
+                    
+                    if(submitButton) submitButton.disabled = true;
+                    if(submitBtnText) submitBtnText.textContent = 'Grading...';
+                    if(submitSpinner) submitSpinner.classList.remove('hidden');
+                    if(resultEl) resultEl.textContent = '';
+
+                    try {
+                        const aiResult = await gradeWithAI(assessments[currentAssessmentIndex], selectedRating.value, justification);
+
+                        if (aiResult.passed) {
+                            currentAssessmentIndex++;
+                            if (currentAssessmentIndex >= assessments.length) {
+                                if(resultEl) {
+                                    resultEl.textContent = 'Congratulations! You have passed all assessments.';
+                                    resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                                }
+                                const userProgressRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/progress`, 'evaluation');
+                                await setDoc(userProgressRef, { assessments_passed: true });
+                                setTimeout(showProjects, 2000);
+                            } else {
+                                if(resultEl) {
+                                    resultEl.textContent = 'Correct! Moving to the next assessment.';
+                                    resultEl.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                                }
+                                setTimeout(() => {
+                                    if(resultEl) resultEl.textContent = '';
+                                    renderCurrentAssessment();
+                                }, 1500);
+                            }
+                        } else {
+                            if(resultEl){
+                                resultEl.innerHTML = `Incorrect. The AI grader provided this feedback: <br/><em class="text-gray-300">"${aiResult.reason}"</em>. Please re-evaluate and try again.`;
+                                resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('AI Grading Error:', error);
+                        if(resultEl) {
+                            resultEl.textContent = 'An error occurred during grading. Please try again later.';
+                            resultEl.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                        }
+                    } finally {
+                        if(submitButton) submitButton.disabled = false;
+                        if(submitBtnText) submitBtnText.textContent = 'Submit Assessment';
+                        if(submitSpinner) submitSpinner.classList.add('hidden');
+                    }
+                }
+
+
+                function showProjects() {
+                    const evalContainer = document.getElementById('evaluation-container');
+                    const projectsListContainer = document.getElementById('projects-list-container');
+                    if(evalContainer) evalContainer.classList.add('hidden');
+                    if(projectsListContainer) projectsListContainer.classList.remove('hidden');
+
+                    const allProjects = [ 
+                        { name: "Space Camelid" }, { name: "Metro Silo" }, { name: "Valkyrie" }, { name: "Stratus Drake" }, 
+                        { name: "Rhind Evals" }, { name: "Blueberry Bagels" }, { name: "Cloud Evals" }, { name: "S Knees Man" }, 
+                        { name: "Mascara Mambo" }, { name: "Glue Sail" }, { name: "Bettascope Rubrics" }, 
+                        { name: "Multilingual Static Comparison v2" }, { name: "Cloud Evals V3" }, { name: "Cypher Evals V3" }, 
+                        { name: "Summer Robin" }, { name: "Big Mallet" } 
+                    ];
+                    
+                    const listElement = document.getElementById('projects-list');
+                    if(listElement) {
+                        listElement.innerHTML = ''; // Clear previous list
+                        allProjects.forEach(project => {
+                            const li = document.createElement('li');
+                            li.className = "col-span-1 flex flex-col rounded-lg bg-gray-700/50 text-center shadow transition-all duration-300 hover:scale-105 hover:border-teal-500 border border-transparent";
+                            li.innerHTML = `
+                                <div class="flex flex-1 flex-col p-8 justify-center">
+                                    <h3 class="text-base font-medium text-white">${project.name}</h3>
+                                </div>
+                            `;
+                            listElement.appendChild(li);
+                        });
+                    }
+                }
+
+                async function gradeWithAI(assessment, userRating, userJustification) {
+                    const apiKey = ""; // Canvas will provide this
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                    const systemPrompt = `You are an expert AI system that grades a junior evaluator's work.
+                    You will be given an 'expertHint' that contains the correct reasoning.
+                    You must evaluate if the junior evaluator's rating and justification align with the expertHint.
+                    The user's rating is on a scale of 1-5, where 1 means Response A is much better, and 5 means Response B is much better. A 3 is neutral.
+
+                    Your response MUST be in JSON format.
+                    - If the user's logic is sound and aligns with the expert hint, return: {"passed": true, "reason": "The user's reasoning is sound."}
+                    - If the user's logic is flawed, their rating is incorrect, or they miss the key points from the expert hint, return: {"passed": false, "reason": "A brief, helpful explanation for why they were wrong. For example: 'Your justification missed the key point that Response B was too technical for the audience.'"}
+                    
+                    Be strict but fair. The user doesn't have to match the hint word-for-word, but their core reasoning must be correct.
+                    Do not add any other text outside the JSON object.
+                    `;
+                    
+                    const userQuery = `
+                        Expert Hint: "${assessment.expertHint}"
+                        ---
+                        User's Rating (1-5): ${userRating}
+                        User's Justification: "${userJustification}"
+                    `;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                        }
+                    };
+                    
+                    let response;
+                    let attempts = 0;
+                    const maxAttempts = 5;
+                    while(attempts < maxAttempts) {
+                        try {
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            if (response.ok) break;
+                        } catch (error) {
+                            console.error(`Attempt ${attempts + 1} failed`, error);
+                        }
+                        attempts++;
+                        await new Promise(res => setTimeout(res, Math.pow(2, attempts) * 1000));
+                    }
+                    
+                    if (!response || !response.ok) {
+                        throw new Error('AI service is unavailable after multiple retries.');
+                    }
+
+                    const result = await response.json();
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    return JSON.parse(jsonString);
+                }
+
+                async function generateBackgroundImage() {
+                    const bgImage = document.getElementById('auth-bg-image');
+                    const apiKey = ""; // Canvas will provide this
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+                    const prompt = "A modern, abstract background with flowing teal and dark gray lines, minimalist digital art, cinematic lighting.";
+
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseModalities: ['IMAGE'] },
+                    };
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                        const result = await response.json();
+                        const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                        
+                        if (base64Data) {
+                            bgImage.src = `data:image/png;base64,${base64Data}`;
+                        } else {
+                            throw new Error('No image data in response.');
+                        }
+                    } catch (error) {
+                        console.error("Background image generation failed:", error);
+                    }
+                }
+
+                // --- Start the App ---
+                initAuth();
+
             } catch (error) {
-                console.error("Background image generation failed:", error);
+                console.error("A critical error occurred during app initialization:", error);
+                const loadingSpinner = document.getElementById('loading-spinner');
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
+                document.body.innerHTML = `<div class="w-full h-full flex items-center justify-center text-red-400 p-8 text-center">
+                    <h1 class="text-2xl font-bold">Application Error</h1>
+                    <p class="mt-2">A critical error prevented the application from starting. Please check the console for details and ensure the configuration is correct.</p>
+                </div>`;
             }
         }
 
-        // --- App Initialization ---
-        if(app) {
-            setupAuthListeners();
-            initAuth();
-        }
+        // --- Run the App ---
+        initApp();
 
     </script>
 </body>
 </html>
+
